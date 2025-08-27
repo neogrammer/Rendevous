@@ -8,7 +8,11 @@
 #include <array>
 #include <SFML/Audio.hpp>
 #include <cmath>
-
+#define LOG(stage, fmt, ...) do { \
+    auto ms = (long long)std::chrono::duration_cast<std::chrono::milliseconds>( \
+        std::chrono::steady_clock::now().time_since_epoch()).count(); \
+    fprintf(stderr, "[%lld] %-14s " fmt "\n", ms, stage, ##__VA_ARGS__); \
+} while(0)
 class Client : public cnet::client_interface<Msg>
 {
 public:
@@ -142,6 +146,8 @@ public:
 
         // Connect
         while (!Connect("192.168.0.5", 60000)) {}
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(8));
         //192.168.0.5
         return true;
     }
@@ -210,30 +216,45 @@ public:
                     cnet::message<Msg> out;
                     out.header.id = Msg::Client_RegisterWithServer;
                     // Fill minimal desc; server will override id
-                    descPlayer.vPos = { 3.0f, 3.0f};
+                    descPlayer.vPos = { 3.0f, 3.0f };
                     out << descPlayer;
                     Send(out);
                     break;
                 }
                 case Msg::Client_AssignID:
                 {
+                    //msg >> nPlayerID;
+                    //std::cout << "Assigned Client ID = " << nPlayerID << "\n";
+                    //if (mapObjects.find(nPlayerID) != mapObjects.end())
+                    //    bWaitingForConnection = false;
+                    //break;  // <== must have this
+                    LOG("MSG", "Client_AssignID body=%u", msg.header.size);
                     msg >> nPlayerID;
-                    std::cout << "Assigned Client ID = " << nPlayerID << "\n";
-                    if (mapObjects.find(nPlayerID) != mapObjects.end())
-                        bWaitingForConnection = false;
-                    break;  // <== must have this
+                    LOG("STATE", "nPlayerID=%u", nPlayerID);
+                    if (mapObjects.count(nPlayerID)) { bWaitingForConnection = false; LOG("STATE", "ready via map hit"); }
+                    break;
                 }
 
                 case Msg::Game_AddPlayer:
                 {
+                    LOG("MSG", "Game_AddPlayer body=%u", msg.header.size);
                     sPlayerDescription desc;
                     msg >> desc;
+                    LOG("DATA", "AddPlayer id=%u", desc.nUniqueID);
                     mapObjects.insert_or_assign(desc.nUniqueID, desc);
                     drawObjects.insert_or_assign(desc.nUniqueID, PlayerDrawData{});
-                    if (desc.nUniqueID == nPlayerID)
-                        bWaitingForConnection = false;
+                    if (desc.nUniqueID == nPlayerID) { bWaitingForConnection = false; LOG("STATE", "ready via self add"); }
                     break;
                 }
+
+                /* sPlayerDescription desc;
+                  msg >> desc;
+                  mapObjects.insert_or_assign(desc.nUniqueID, desc);
+                  drawObjects.insert_or_assign(desc.nUniqueID, PlayerDrawData{});
+                  if (desc.nUniqueID == nPlayerID)
+                      bWaitingForConnection = false;
+                  break;*/
+
 
                 case Msg::Game_RemovePlayer:
                 {
@@ -244,18 +265,45 @@ public:
                     break;
                 }
 
+                //case Msg::Server_PlayerDrawSnapshot:
+                //{
+                //    uint32_t count = 0;
+                //    msg >> count;                  // OK now: count was pushed last
+
+                //    for (uint32_t i = 0; i < count; ++i)
+                //    {
+                //        PlayerDrawData d{};
+                //        msg >> d;                  // pops the last PlayerDrawData first (order doesn't matter)
+                //        drawObjects[d.id] = d;
+
+                //        if (d.id == nPlayerID) {
+                //            playerPos = { d.xpos, d.ypos };
+                //            // clamp indices before using them
+                //            auto ai = (static_cast<uint32_t>(d.animID) <= static_cast<uint32_t>(AnimID::Run))
+                //                ? static_cast<int>(d.animID) : 0;
+                //            auto di = (static_cast<uint32_t>(d.dir) < 8u)
+                //                ? static_cast<int>(d.dir) : 0;
+
+                //            const auto& frames = playerAnimFrames[ai][di];
+                //            if (!frames.empty()) {
+                //                playerAnimID = (ai == 1) ? AnimID::Run : AnimID::Idle;
+                //                playerDir = static_cast<Dir>(di);
+                //                playerAnimFrameIdx = d.frameIndex % static_cast<uint32_t>(frames.size());
+                //            }
+                //        }
+                //    }
+                //    break;
                 case Msg::Server_PlayerDrawSnapshot:
                 {
-                    uint32_t count = 0;
-                    msg >> count;                  // OK now: count was pushed last
-
-                    for (uint32_t i = 0; i < count; ++i)
-                    {
+                    uint32_t count = 0; msg >> count;
+                    LOG("MSG", "Snapshot count=%u body=%u", count, msg.header.size);
+                    for (uint32_t i = 0; i < count; ++i) {
                         PlayerDrawData d{};
-                        msg >> d;                  // pops the last PlayerDrawData first (order doesn't matter)
+                        msg >> d;
+                        if (d.id == nPlayerID) LOG("DATA", "Snapshot self id=%u x=%.1f y=%.1f", d.id, d.xpos, d.ypos);
                         drawObjects[d.id] = d;
-
                         if (d.id == nPlayerID) {
+
                             playerPos = { d.xpos, d.ypos };
                             // clamp indices before using them
                             auto ai = (static_cast<uint32_t>(d.animID) <= static_cast<uint32_t>(AnimID::Run))
@@ -271,40 +319,58 @@ public:
                             }
                         }
                     }
+                }
+                break;
+                default:
+                {}
                     break;
                 }
+              }
 
-                default: break;
-                }
-            }
-
-            // Flush any queued chat messages
-            if (!messages.empty())
-            {
-                for (auto& m : messages)
+                // Flush any queued chat messages
+                if (!messages.empty())
                 {
-                    cnet::message<Msg> out;
-                    out.header.id = Msg::Client_SendText;
-                    out << m.nUniqueID << m.message;
-                    Send(out);
+                    for (auto& m : messages)
+                    {
+                        cnet::message<Msg> out;
+                        out.header.id = Msg::Client_SendText;
+                        out << m.nUniqueID << m.message;
+                        Send(out);
+                    }
+                    messages.clear();
                 }
-                messages.clear();
-            }
 
-            // ===== INPUT ONLY (no local simulation) =====
-            if (!inEditMode)
-            {
-                myIO = {};
-                if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)) myIO.r = true;
-                if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)) myIO.l = true;
-                if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)) myIO.u = true;
-                if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)) myIO.d = true;
+                // ===== INPUT ONLY (no local simulation) =====
+                if (!inEditMode)
+                {
+                    const bool ready = (nPlayerID != 0) && (mapObjects.count(nPlayerID) != 0);
 
-                cnet::message<Msg> ioMsg;
-                ioMsg.header.id = Msg::Client_IO;
-                ioMsg << myIO;
-                Send(ioMsg);
-            }
+                    if (IsConnected() && ready)
+                    {
+                        PlayerIO myIO{};
+                        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)) myIO.r = true;
+                        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)) myIO.l = true;
+                        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)) myIO.u = true;
+                        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)) myIO.d = true;
+
+                        cnet::message<Msg> ioMsg;
+                        ioMsg.header.id = Msg::Client_IO;
+                        ioMsg << myIO;
+                        this->myIO = myIO;
+                        Send(ioMsg);
+                    }
+                  /*  myIO = {};
+                    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)) myIO.r = true;
+                    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)) myIO.l = true;
+                    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)) myIO.u = true;
+                    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)) myIO.d = true;
+
+                    cnet::message<Msg> ioMsg;
+                    ioMsg.header.id = Msg::Client_IO;
+                    ioMsg << myIO;
+                    Send(ioMsg);*/
+                }
+            
         }
 
         return true;
