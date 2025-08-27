@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="assets">
+      <UniqueIdentifier>{5f1115d5-e5dc-425f-b674-510c0582d1eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="assets\textures">
+      <UniqueIdentifier>{f1105573-48b9-4522-8bf7-e8359ed6f105}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="assets\font">
+      <UniqueIdentifier>{f8d1399f-ee9d-411b-9092-e384cc373bff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="assets\sounds">
+      <UniqueIdentifier>{ad77d145-ce74-4e38-a964-4a851844d8be}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="CLIENT.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="assets\textures\isometric_demo.png">
+      <Filter>assets\textures</Filter>
+    </Image>
+    <Image Include="assets\textures\isoTileset2.png">
+      <Filter>assets\textures</Filter>
+    </Image>
+    <Image Include="assets\textures\blocksTileSheet.png">
+      <Filter>assets\textures</Filter>
+    </Image>
+    <Image Include="assets\textures\Eskibro.jpg">
+      <Filter>assets\textures</Filter>
+    </Image>
+    <Image Include="assets\textures\idle_sheet.png">
+      <Filter>assets\textures</Filter>
+    </Image>
+    <Image Include="assets\textures\run_sheet.png">
+      <Filter>assets\textures</Filter>
+    </Image>
+    <Image Include="assets\textures\kittyLogo.png">
+      <Filter>assets\textures</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="assets\font\Crusty.ttf">
+      <Filter>assets\font</Filter>
+    </Font>
+    <Font Include="assets\font\font1.otf">
+      <Filter>assets\font</Filter>
+    </Font>
+    <Font Include="assets\font\font1.ttf">
+      <Filter>assets\font</Filter>
+    </Font>
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="assets\sounds\meow1.wav">
+      <Filter>assets\textures</Filter>
+    </Media>
+    <Media Include="assets\sounds\meow2.wav">
+      <Filter>assets\textures</Filter>
+    </Media>
+    <Media Include="assets\sounds\meow3.wav">
+      <Filter>assets\sounds</Filter>
+    </Media>
+    <Media Include="assets\sounds\meow4.wav">
+      <Filter>assets\sounds</Filter>
+    </Media>
+  </ItemGroup>
+</Project>

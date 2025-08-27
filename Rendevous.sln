@@ -1,0 +1,47 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36414.22 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Rendevous", "Rendevous\Rendevous.vcxproj", "{7EE81B59-F520-43D3-A86C-61D265A3B989}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Rendevous_Client", "Rendevous_Client\Rendevous_Client.vcxproj", "{F0BC4572-D1FF-48D1-9DC0-9FA4FF26AFE4}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7EE81B59-F520-43D3-A86C-61D265A3B989} = {7EE81B59-F520-43D3-A86C-61D265A3B989}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
+	ProjectSection(SolutionItems) = preProject
+		Network_Common.h = Network_Common.h
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7EE81B59-F520-43D3-A86C-61D265A3B989}.Debug|x64.ActiveCfg = Debug|x64
+		{7EE81B59-F520-43D3-A86C-61D265A3B989}.Debug|x64.Build.0 = Debug|x64
+		{7EE81B59-F520-43D3-A86C-61D265A3B989}.Debug|x86.ActiveCfg = Debug|Win32
+		{7EE81B59-F520-43D3-A86C-61D265A3B989}.Debug|x86.Build.0 = Debug|Win32
+		{7EE81B59-F520-43D3-A86C-61D265A3B989}.Release|x64.ActiveCfg = Release|x64
+		{7EE81B59-F520-43D3-A86C-61D265A3B989}.Release|x86.ActiveCfg = Release|Win32
+		{7EE81B59-F520-43D3-A86C-61D265A3B989}.Release|x86.Build.0 = Release|Win32
+		{F0BC4572-D1FF-48D1-9DC0-9FA4FF26AFE4}.Debug|x64.ActiveCfg = Debug|x64
+		{F0BC4572-D1FF-48D1-9DC0-9FA4FF26AFE4}.Debug|x64.Build.0 = Debug|x64
+		{F0BC4572-D1FF-48D1-9DC0-9FA4FF26AFE4}.Debug|x86.ActiveCfg = Debug|Win32
+		{F0BC4572-D1FF-48D1-9DC0-9FA4FF26AFE4}.Debug|x86.Build.0 = Debug|Win32
+		{F0BC4572-D1FF-48D1-9DC0-9FA4FF26AFE4}.Release|x64.ActiveCfg = Release|x64
+		{F0BC4572-D1FF-48D1-9DC0-9FA4FF26AFE4}.Release|x86.ActiveCfg = Release|Win32
+		{F0BC4572-D1FF-48D1-9DC0-9FA4FF26AFE4}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DEDBCF91-073A-484B-8FE8-54445D1AC032}
+	EndGlobalSection
+EndGlobal

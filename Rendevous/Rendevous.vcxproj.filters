@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="SERVER.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="assets">
+      <UniqueIdentifier>{392cb521-1772-4c68-832f-848a3dbf37f3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="assets\font">
+      <UniqueIdentifier>{718ca152-2f1f-4ca9-915f-e394271aabd3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="assets\textures">
+      <UniqueIdentifier>{db175cef-ea53-491f-b96a-9118b4ee205d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="assets\font\Crusty.ttf">
+      <Filter>assets\font</Filter>
+    </Font>
+    <Font Include="assets\font\font1.otf">
+      <Filter>assets\font</Filter>
+    </Font>
+    <Font Include="assets\font\font1.ttf">
+      <Filter>assets\font</Filter>
+    </Font>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="assets\textures\isometric_demo.png">
+      <Filter>assets\textures</Filter>
+    </Image>
+  </ItemGroup>
+</Project>
