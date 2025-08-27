@@ -141,7 +141,7 @@ public:
 
 
         // Connect
-        while (!Connect("192.168.0.5", 60000)) {}
+        while (!Connect("24.236.104.52", 60000)) {}
         //192.168.0.5
         return true;
     }
@@ -216,13 +216,9 @@ public:
                     break;
                 }
                 case Msg::Client_AssignID:
-                {
                     msg >> nPlayerID;
                     std::cout << "Assigned Client ID = " << nPlayerID << "\n";
-                    if (mapObjects.find(nPlayerID) != mapObjects.end())
-                        bWaitingForConnection = false;
-                    break;  // <== must have this
-                }
+                    break;
 
                 case Msg::Game_AddPlayer:
                 {
@@ -230,8 +226,10 @@ public:
                     msg >> desc;
                     mapObjects.insert_or_assign(desc.nUniqueID, desc);
                     drawObjects.insert_or_assign(desc.nUniqueID, PlayerDrawData{});
-                    if (desc.nUniqueID == nPlayerID)
-                        bWaitingForConnection = false;
+                    if (desc.nUniqueID == nPlayerID) bWaitingForConnection = false;
+
+           
+
                     break;
                 }
 
