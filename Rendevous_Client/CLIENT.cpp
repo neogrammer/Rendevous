@@ -33,6 +33,8 @@ private:
     const unsigned SCRH = 900;
     const unsigned TW = 128;
     const unsigned TH = 128;
+    bool startingAttack = false;
+    
 
     // Player animation
     Dir    playerDir = Dir::D;
@@ -40,6 +42,7 @@ private:
     uint32_t playerAnimFrameIdx = 0;
     const int playerWidth = 299;
     const int playerHeight = 240;
+    bool isAttacking = false;
 
     // NOTE: client position now comes from server; keep a local for camera center
     sf::Vector2f playerPos{ 200.f,200.f };
@@ -48,7 +51,7 @@ private:
 
     // After:
     using AnimSheet = std::array<std::vector<sf::IntRect>, 8>;
-    std::array<AnimSheet, 2> playerAnimFrames; // [0]=Idle, [1]=Run
+    std::array<AnimSheet, 3> playerAnimFrames; // [0]=Idle, [1]=Run
 
     inline static int animIndex(AnimID a) {
         const auto v = static_cast<uint32_t>(a);
@@ -60,9 +63,10 @@ private:
     }
 
 
-    std::array<sf::Texture, 2> playerTexArr = {
+    std::array<sf::Texture, 3> playerTexArr = {
         sf::Texture{"assets/textures/idle_sheet.png"},
-        sf::Texture{"assets/textures/run_sheet.png"}
+        sf::Texture{"assets/textures/run_sheet.png"},
+        sf::Texture{"assets/textures/attack_sheet.png"}
     };
     sf::Texture& getPlayerTex(AnimID id_) { return playerTexArr[(int)id_]; }
     typedef std::array<std::vector<sf::IntRect>, 8> AnimSheet;
@@ -125,6 +129,8 @@ public:
         // Build anim frames
         playerAnimFrames[(uint32_t)AnimID::Idle] = AnimSheet{};
         playerAnimFrames[(uint32_t)AnimID::Run] = AnimSheet{};
+        playerAnimFrames[(uint32_t)AnimID::Attack] = AnimSheet{};
+
 
 
 
@@ -143,6 +149,13 @@ public:
                 playerAnimFrames[1][i].emplace_back(sf::IntRect{ {j * playerWidth, i * playerHeight},{playerWidth,playerHeight} });
         }
 
+        // Attack
+        for (int i = 0; i < 8; ++i) {
+            playerAnimFrames[1][i].clear();
+            playerAnimFrames[1][i].reserve(17);
+            for (int j = 0; j < 17; ++j)
+                playerAnimFrames[1][i].emplace_back(sf::IntRect{ {j * playerWidth, i * playerHeight},{playerWidth,playerHeight} });
+        }
 
         // Connect
         while (!Connect("192.168.0.5", 60000)) {}
@@ -306,14 +319,14 @@ public:
 
                             playerPos = { d.xpos, d.ypos };
                             // clamp indices before using them
-                            auto ai = (static_cast<uint32_t>(d.animID) <= static_cast<uint32_t>(AnimID::Run))
+                            auto ai = (static_cast<uint32_t>(d.animID) <= static_cast<uint32_t>(AnimID::Attack))
                                 ? static_cast<int>(d.animID) : 0;
                             auto di = (static_cast<uint32_t>(d.dir) < 8u)
                                 ? static_cast<int>(d.dir) : 0;
 
                             const auto& frames = playerAnimFrames[ai][di];
                             if (!frames.empty()) {
-                                playerAnimID = (ai == 1) ? AnimID::Run : AnimID::Idle;
+                                playerAnimID = (ai == 1) ? AnimID::Run : ((ai == 2) ? AnimID::Attack : AnimID::Idle);
                                 playerDir = static_cast<Dir>(di);
                                 playerAnimFrameIdx = d.frameIndex % static_cast<uint32_t>(frames.size());
                             }
@@ -323,53 +336,69 @@ public:
                 break;
                 default:
                 {}
-                    break;
+                break;
                 }
-              }
+            }
 
-                // Flush any queued chat messages
-                if (!messages.empty())
+            // Flush any queued chat messages
+            if (!messages.empty())
+            {
+                for (auto& m : messages)
                 {
-                    for (auto& m : messages)
-                    {
-                        cnet::message<Msg> out;
-                        out.header.id = Msg::Client_SendText;
-                        out << m.nUniqueID << m.message;
-                        Send(out);
-                    }
-                    messages.clear();
+                    cnet::message<Msg> out;
+                    out.header.id = Msg::Client_SendText;
+                    out << m.nUniqueID << m.message;
+                    Send(out);
                 }
+                messages.clear();
+            }
 
-                // ===== INPUT ONLY (no local simulation) =====
-                if (!inEditMode)
+            // ===== INPUT ONLY (no local simulation) =====
+            if (!inEditMode)
+            {
+                const bool ready = (nPlayerID != 0) && (mapObjects.count(nPlayerID) != 0);
+
+                if (IsConnected() && ready)
                 {
-                    const bool ready = (nPlayerID != 0) && (mapObjects.count(nPlayerID) != 0);
-
-                    if (IsConnected() && ready)
-                    {
-                        PlayerIO myIO{};
-                        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)) myIO.r = true;
-                        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)) myIO.l = true;
-                        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)) myIO.u = true;
-                        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)) myIO.d = true;
-
-                        cnet::message<Msg> ioMsg;
-                        ioMsg.header.id = Msg::Client_IO;
-                        ioMsg << myIO;
-                        this->myIO = myIO;
-                        Send(ioMsg);
-                    }
-                  /*  myIO = {};
+                    PlayerIO myIO{};
                     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)) myIO.r = true;
                     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)) myIO.l = true;
                     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)) myIO.u = true;
                     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)) myIO.d = true;
 
+                    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space))
+                    {
+                        isAttacking = true;
+                        startingAttack = true;
+                    }
+
                     cnet::message<Msg> ioMsg;
                     ioMsg.header.id = Msg::Client_IO;
                     ioMsg << myIO;
-                    Send(ioMsg);*/
+                    this->myIO = myIO;
+                    Send(ioMsg);
                 }
+                /*  myIO = {};
+                  if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)) myIO.r = true;
+                  if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)) myIO.l = true;
+                  if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)) myIO.u = true;
+                  if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)) myIO.d = true;
+
+                  cnet::message<Msg> ioMsg;
+                  ioMsg.header.id = Msg::Client_IO;
+                  ioMsg << myIO;
+                  Send(ioMsg);*/
+            }
+            if (isAttacking)
+            {
+
+                if (startingAttack)
+                {
+                    startingAttack = false;
+                    
+                }
+
+            }
             
         }
 
@@ -425,7 +454,7 @@ public:
             if (d.id == nPlayerID) {
                 playerPos = { d.xpos, d.ypos };
                 // Clamp to avoid weird keys
-                playerAnimID = (animIndex(d.animID) == 1) ? AnimID::Run : AnimID::Idle;
+                playerAnimID = (animIndex(d.animID) == 1) ? AnimID::Run : ((d.animID == (AnimID)(uint32_t)2) ? AnimID::Attack : AnimID::Idle);
                 playerDir = static_cast<Dir>(dirIndex(d.dir));
                 playerAnimFrameIdx = frames.empty() ? 0u : (d.frameIndex % static_cast<uint32_t>(playerAnimFrames[animIndex(playerAnimID)][dirIndex(playerDir)].size()));
             }
@@ -433,7 +462,7 @@ public:
 
             const auto idx = frames.empty() ? 0u : (d.frameIndex % static_cast<uint32_t>(frames.size()));
 
-            sf::Sprite spr{ (ai == animIndex(AnimID::Idle)) ? playerTexArr[0] : playerTexArr[1] };
+            sf::Sprite spr{ (ai == animIndex(AnimID::Idle)) ? playerTexArr[0] : (ai == animIndex(AnimID::Attack)) ? playerTexArr[2] : playerTexArr[1]};
 
             // If your world is “logical” coords, iso-map them; otherwise just use d.xpos/d.ypos
             sf::Vector2f pos{ d.xpos, d.ypos };

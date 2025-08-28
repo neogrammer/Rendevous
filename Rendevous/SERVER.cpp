@@ -296,7 +296,7 @@ public:
             // clamp to valid ranges to be safe
             auto clampAnim = [](AnimID a) {
                 uint32_t v = static_cast<uint32_t>(a);
-                return (v <= static_cast<uint32_t>(AnimID::Run)) ? a : AnimID::Idle;
+                return (v <= static_cast<uint32_t>(AnimID::Run)) ? a : (v <= (uint32_t)(AnimID::Attack) ? AnimID::Attack : AnimID::Idle);
                 };
             auto clampDir = [](Dir d) {
                 uint32_t v = static_cast<uint32_t>(d);

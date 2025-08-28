@@ -27,7 +27,7 @@ enum class Msg : uint32_t
     Client_IO
 };
 
-enum class AnimID : uint32_t { Idle = 0, Run };
+enum class AnimID : uint32_t { Idle = 0, Run=1, Attack=2 };
 enum class Dir : uint32_t { D = 0, DR, R, UR, U, UL, L, DL };
 enum class TEXT : uint32_t { POOPSIE };
 
