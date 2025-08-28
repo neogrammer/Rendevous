@@ -53,6 +53,8 @@ struct PlayerIO
     bool l = false;
     bool r = false;
     bool u = false;
+
+    bool space = false;
 };
 
 struct PlayerData            // Server-side simulation state
@@ -112,12 +114,14 @@ inline cnet::message<Msg>& operator<<(cnet::message<Msg>& msg, const PlayerIO& v
     msg << v.u
         << v.r
         << v.l
-        << v.d;
+        << v.d
+        << v.space;
     return msg;
 }
 
 inline cnet::message<Msg>& operator>>(cnet::message<Msg>& msg, PlayerIO& v) {
-    msg >> v.d
+    msg >> v.space
+        >> v.d
         >> v.l
         >> v.r
         >> v.u;

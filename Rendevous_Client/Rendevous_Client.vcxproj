@@ -103,13 +103,13 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\sdks\asio-1.30.2\include;C:\Users\jlhar\OneDrive\Desktop\SFML\Rendevous\Rendevous\Rendevous_Client;C:\sdks\sfml3\include;C:\sdks\NetCommon;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)3rdParty\asio-1.30.2\include;$(ProjectDir);$(SolutionDir)3rdParty\sfml3\include;$(SolutionDir)3rdParty\NetCommon\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <PerUserRedirection>true</PerUserRedirection>
-      <AdditionalLibraryDirectories>C:\sdks\NetCommon\x64\Debug;C:\sdks\sfml3\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)3rdParty\NetCommon\Debug;$(SolutionDir)3rdParty\sfml3\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>netcommon.lib;sfml-system-d.lib;sfml-window-d.lib;sfml-graphics-d.lib;sfml-audio-d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

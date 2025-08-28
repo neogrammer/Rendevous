@@ -17,7 +17,7 @@ public:
     std::unordered_map<uint32_t, PlayerIO>   playerIOMap;
 
     // Debug
-    uint32_t ioU{}, ioD{}, ioL{}, ioR{};
+    uint32_t ioU{}, ioD{}, ioL{}, ioR{}, ioSpace{};
 
     // Text
     std::map<uint32_t, std::vector<TEXT>> m_messagesToDisplay;
@@ -152,7 +152,7 @@ protected:
             PlayerIO io{};
             msg >> io;
 
-            ioU = io.u; ioD = io.d; ioL = io.l; ioR = io.r;
+            ioU = io.u; ioD = io.d; ioL = io.l; ioR = io.r; ioSpace = io.space;
 
             auto& pio = playerIOMap[client->GetID()];
             pio = io; // overwrite this frame's input
@@ -245,9 +245,22 @@ public:
             const float len = std::sqrt(vx * vx + vy * vy);
             if (len > 0.0001f) { vx /= len; vy /= len; }
 
+            if (io.space)
+            {
+                vx = 0.f;
+                vy = 0.f;
+            }
+            else {
+                if (p.animID == AnimID::Attack)
+                {
+                    p.animID = AnimID::Idle;
+                    p.frameIndex = 0;
+                }
+            }
+
             p.xvel = vx * SPEED;
             p.yvel = vy * SPEED;
-
+            
             // Direction + animation (use screen intent so facing matches keys)
             if (std::abs(sx) > 0.001f || std::abs(sy) > 0.001f)
             {
@@ -260,11 +273,20 @@ public:
                 else if (sy < -0.5f)               p.dir = Dir::U;  // Up
                 else                                p.dir = Dir::D;  // Down
 
-                if (p.animID != AnimID::Run) { p.animID = AnimID::Run; p.frameIndex = 0; }
+                if (p.animID != AnimID::Run && p.animID != AnimID::Attack) { p.animID = AnimID::Run; p.frameIndex = 0; }
             }
             else
             {
-                if (p.animID != AnimID::Idle) { p.animID = AnimID::Idle; p.frameIndex = 0; }
+                if (p.animID != AnimID::Idle && p.animID != AnimID::Attack) { p.animID = AnimID::Idle; p.frameIndex = 0; }
+            }
+
+            if (io.space)
+            {
+                if (p.animID != AnimID::Attack)
+                {
+                    p.animID = AnimID::Attack;
+                    p.frameIndex = 0;
+                }
             }
 
             // Advance position
@@ -272,6 +294,7 @@ public:
             p.ypos += p.yvel * dt;
 
             // Advance frame (same as before)
+            
             p.frameIndex = (p.frameIndex + ((p.animID == AnimID::Run) ? 1u : 1u)) % 32u;
         }
     }
@@ -296,7 +319,8 @@ public:
             // clamp to valid ranges to be safe
             auto clampAnim = [](AnimID a) {
                 uint32_t v = static_cast<uint32_t>(a);
-                return (v <= static_cast<uint32_t>(AnimID::Run)) ? a : (v <= (uint32_t)(AnimID::Attack) ? AnimID::Attack : AnimID::Idle);
+                return a;
+                    //(v <= static_cast<uint32_t>(AnimID::Attack)) ? a : (v <= (uint32_t)(AnimID::Run) ? AnimID::Attack : AnimID::Idle);
                 };
             auto clampDir = [](Dir d) {
                 uint32_t v = static_cast<uint32_t>(d);
@@ -402,7 +426,7 @@ int main()
         text.setOutlineColor(sf::Color::White);
         text.setOutlineThickness(2.f);
         std::string str = std::to_string(server.ioD) + " " + std::to_string(server.ioL) + " " +
-            std::to_string(server.ioU) + " " + std::to_string(server.ioR);
+            std::to_string(server.ioU) + " " + std::to_string(server.ioR) + " " + std::to_string(server.ioSpace);
         text.setString(str);
         window.draw(text);
 

@@ -8,16 +8,23 @@
 #include <array>
 #include <SFML/Audio.hpp>
 #include <cmath>
+#include <algorithm>
 #define LOG(stage, fmt, ...) do { \
     auto ms = (long long)std::chrono::duration_cast<std::chrono::milliseconds>( \
         std::chrono::steady_clock::now().time_since_epoch()).count(); \
     fprintf(stderr, "[%lld] %-14s " fmt "\n", ms, stage, ##__VA_ARGS__); \
 } while(0)
+
+
+
 class Client : public cnet::client_interface<Msg>
 {
 public:
     Client() { wnd = new sf::RenderWindow{}; }
-
+    float getPlayerZHeight(uint32_t playerID)
+    {
+        return drawObjects[playerID].ypos + playerZHeightOffset;
+    }
 private:
     // Tiles
     sf::Texture tilesetTex{ "assets/textures/blocksTileSheet128x128.png" };
@@ -29,8 +36,8 @@ private:
     bool inEditMode = false;
     std::vector<sf::Sprite> tilemap;
 
-    const unsigned SCRW = 1600;
-    const unsigned SCRH = 900;
+    const unsigned SCRW = 800;
+    const unsigned SCRH = 500;
     const unsigned TW = 128;
     const unsigned TH = 128;
     bool startingAttack = false;
@@ -39,6 +46,7 @@ private:
     // Player animation
     Dir    playerDir = Dir::D;
     AnimID playerAnimID = AnimID::Idle;
+    float playerZHeightOffset = 156.f;
     uint32_t playerAnimFrameIdx = 0;
     const int playerWidth = 299;
     const int playerHeight = 240;
@@ -53,11 +61,11 @@ private:
     using AnimSheet = std::array<std::vector<sf::IntRect>, 8>;
     std::array<AnimSheet, 3> playerAnimFrames; // [0]=Idle, [1]=Run
 
-    inline static int animIndex(AnimID a) {
+    inline static uint32_t animIndex(AnimID a) {
         const auto v = static_cast<uint32_t>(a);
-        return (v <= static_cast<uint32_t>(AnimID::Run)) ? static_cast<int>(v) : 0; // clamp
+        return (v <= static_cast<uint32_t>(AnimID::Attack)) ? static_cast<int>(v) : 0; // clamp
     }
-    inline static int dirIndex(Dir d) {
+    inline static uint32_t dirIndex(Dir d) {
         const auto v = static_cast<uint32_t>(d);
         return (v < 8u) ? static_cast<int>(v) : 0; // clamp
     }
@@ -121,7 +129,7 @@ public:
         // (Intro kitty scene kept, unchanged for brevity)
 
         if (!wnd->isOpen()) return false;
-        wnd->setPosition(sf::Vector2i(20, 520));
+        wnd->setPosition(sf::Vector2i(20, 120));
 
         HWND hWnd = GetConsoleWindow();
         ShowWindow(hWnd, SW_HIDE);
@@ -151,15 +159,17 @@ public:
 
         // Attack
         for (int i = 0; i < 8; ++i) {
-            playerAnimFrames[1][i].clear();
-            playerAnimFrames[1][i].reserve(17);
+            playerAnimFrames[2][i].clear();
+            playerAnimFrames[2][i].reserve(17);
             for (int j = 0; j < 17; ++j)
-                playerAnimFrames[1][i].emplace_back(sf::IntRect{ {j * playerWidth, i * playerHeight},{playerWidth,playerHeight} });
+                playerAnimFrames[2][i].emplace_back(sf::IntRect{ {j * playerWidth, i * playerHeight},{playerWidth,playerHeight} });
         }
 
         // Connect
-        while (!Connect("192.168.0.5", 60000)) {}
-
+        while (!Connect("127.0.0.1", 60000)) {}
+        //24.236.104.52
+        //
+        //phone: 10.143.2.210
         std::this_thread::sleep_for(std::chrono::milliseconds(8));
         //192.168.0.5
         return true;
@@ -326,7 +336,7 @@ public:
 
                             const auto& frames = playerAnimFrames[ai][di];
                             if (!frames.empty()) {
-                                playerAnimID = (ai == 1) ? AnimID::Run : ((ai == 2) ? AnimID::Attack : AnimID::Idle);
+                                playerAnimID = (ai == (uint32_t)1) ? AnimID::Run : ((ai == (uint32_t)2) ? AnimID::Attack : AnimID::Idle);
                                 playerDir = static_cast<Dir>(di);
                                 playerAnimFrameIdx = d.frameIndex % static_cast<uint32_t>(frames.size());
                             }
@@ -361,6 +371,7 @@ public:
                 if (IsConnected() && ready)
                 {
                     PlayerIO myIO{};
+                    
                     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)) myIO.r = true;
                     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)) myIO.l = true;
                     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)) myIO.u = true;
@@ -368,6 +379,7 @@ public:
 
                     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space))
                     {
+                        myIO.space = true;
                         isAttacking = true;
                         startingAttack = true;
                     }
@@ -405,6 +417,8 @@ public:
         return true;
     }
 
+
+
     void Render()
     {
         auto mapIso = [&](const sf::Vector2f& pos) {
@@ -432,20 +446,35 @@ public:
         }
 
 
+        std::vector<std::pair<float, std::pair<uint32_t, PlayerDrawData>>> sortme;
+        sortme.clear();
+        sortme.reserve(drawObjects.size());
 
         for (auto& kv : drawObjects)
         {
 
+            sortme.emplace_back(std::pair{ getPlayerZHeight(kv.first), std::pair{kv.first, kv.second} });
+           
+        }
+
+        sort(sortme.begin(), sortme.end(), [&](const std::pair<float, std::pair<uint32_t, PlayerDrawData>>& a,const std::pair<float,std::pair<uint32_t, PlayerDrawData>>& b)->bool{
+            return (a.first < b.first);
+            });
 
 
-            const auto& d = kv.second;
+
+        for (int i =0; i < sortme.size(); i++)
+        {
+            uint32_t id = sortme[i].second.first;
+            float zHeight = sortme[i].first;
+            const auto& d = sortme[i].second.second;
 
             
             
             
             // Clamp bad values coming off the wire
-            const int ai = animIndex(d.animID);
-            const int di = dirIndex(d.dir);
+            const uint32_t ai = animIndex(d.animID);
+            const uint32_t di = dirIndex(d.dir);
 
             const auto& frames = playerAnimFrames[ai][di];
             if (frames.empty()) continue;
@@ -454,7 +483,7 @@ public:
             if (d.id == nPlayerID) {
                 playerPos = { d.xpos, d.ypos };
                 // Clamp to avoid weird keys
-                playerAnimID = (animIndex(d.animID) == 1) ? AnimID::Run : ((d.animID == (AnimID)(uint32_t)2) ? AnimID::Attack : AnimID::Idle);
+                playerAnimID = (((AnimID)animIndex(d.animID) == (AnimID)(uint32_t)1) ? AnimID::Run : ((d.animID == (AnimID)(uint32_t)2) ? AnimID::Attack : AnimID::Idle));
                 playerDir = static_cast<Dir>(dirIndex(d.dir));
                 playerAnimFrameIdx = frames.empty() ? 0u : (d.frameIndex % static_cast<uint32_t>(playerAnimFrames[animIndex(playerAnimID)][dirIndex(playerDir)].size()));
             }
@@ -462,7 +491,7 @@ public:
 
             const auto idx = frames.empty() ? 0u : (d.frameIndex % static_cast<uint32_t>(frames.size()));
 
-            sf::Sprite spr{ (ai == animIndex(AnimID::Idle)) ? playerTexArr[0] : (ai == animIndex(AnimID::Attack)) ? playerTexArr[2] : playerTexArr[1]};
+            sf::Sprite spr{ ((ai == animIndex(AnimID::Idle)) ? playerTexArr[0] : ((ai == animIndex(AnimID::Attack)) ? playerTexArr[2] : playerTexArr[1]))};
 
             // If your world is “logical” coords, iso-map them; otherwise just use d.xpos/d.ypos
             sf::Vector2f pos{ d.xpos, d.ypos };
@@ -483,7 +512,7 @@ public:
         //    sf::Vector2f pos{ d.xpos, d.ypos };
         //    spr.setPosition(mapIso(pos));
 
-        //    const auto& frames = playerAnimFrames[d.animID][(int)d.dir];
+        //    const auto& frames = playerAnimFrames[d/.animID][(int)d.dir];
         //    if (frames.empty()) { continue; }
         //    const auto idx = frames.empty() ? 0u : (d.frameIndex % (uint32_t)frames.size());
         //    spr.setTextureRect(frames[idx]);
