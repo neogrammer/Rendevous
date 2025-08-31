@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "x64\\Debug\\net_common.h.obj",
+            "outputs": [
+                "C:\\Users\\jlhar\\OneDrive\\Desktop\\VS_PJX\\MMO_SFML_Game\\x64\\Debug\\NetCommon.pdb",
+                "x64\\Debug\\",
+                "C:\\Users\\jlhar\\OneDrive\\Desktop\\VS_PJX\\MMO_SFML_Game\\NetCommon\\x64\\Debug\\net_common.h.ifc"
+            ],
+            "provides": [
+                {
+                    "logical-name": "net_common.h",
+                    "source-path": "c:\\users\\jlhar\\onedrive\\desktop\\vs_pjx\\mmo_sfml_game\\netcommon\\net_common.h",
+                    "lookup-method": "absolute"
+                }
+            ],
+            "requires": []
+        }
+    ]
+}

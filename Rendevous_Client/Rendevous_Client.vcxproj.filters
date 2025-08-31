@@ -25,6 +25,12 @@
     <Filter Include="assets\sounds">
       <UniqueIdentifier>{ad77d145-ce74-4e38-a964-4a851844d8be}</UniqueIdentifier>
     </Filter>
+    <Filter Include="assets\areas">
+      <UniqueIdentifier>{2ebc5d1d-3a1f-4828-bbf4-ffc75412fdac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="assets\tilesets">
+      <UniqueIdentifier>{ebe39531-9f33-4b18-9b78-0fab02ef65de}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CLIENT.cpp">
@@ -66,17 +72,25 @@
     </Font>
   </ItemGroup>
   <ItemGroup>
-    <Media Include="assets\sounds\meow1.wav">
-      <Filter>assets\textures</Filter>
-    </Media>
-    <Media Include="assets\sounds\meow2.wav">
-      <Filter>assets\textures</Filter>
-    </Media>
     <Media Include="assets\sounds\meow3.wav">
       <Filter>assets\sounds</Filter>
     </Media>
     <Media Include="assets\sounds\meow4.wav">
       <Filter>assets\sounds</Filter>
     </Media>
+    <Media Include="assets\sounds\meow2.wav">
+      <Filter>assets\sounds</Filter>
+    </Media>
+    <Media Include="assets\sounds\meow1.wav">
+      <Filter>assets\sounds</Filter>
+    </Media>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="assets\areas\FrenchTickla.map">
+      <Filter>assets\areas</Filter>
+    </None>
+    <None Include="assets\tilesets\StarterSet.tset">
+      <Filter>assets\tilesets</Filter>
+    </None>
   </ItemGroup>
 </Project>

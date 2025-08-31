@@ -106,10 +106,11 @@
       <AdditionalIncludeDirectories>$(SolutionDir)3rdParty\asio-1.30.2\include;$(ProjectDir);$(SolutionDir)3rdParty\sfml3\include;$(SolutionDir)3rdParty\NetCommon\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)3rdParty\NetCommon\Debug;$(SolutionDir)3rdParty\sfml3\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\jlhar\OneDrive\Desktop\SFML\Rendevous\Rendevous\3rdParty\sfml3\lib\Debug;$(SolutionDir)3rdParty\NetCommon\Debug;$(SolutionDir)3rdParty\sfml3\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>sfml-system-d.lib;sfml-window-d.lib;sfml-graphics-d.lib;sfml-audio-d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -131,6 +132,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="SERVER.cpp" />
+    <ClCompile Include="src\CollisionSystem\Physics.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="assets\font\Crusty.ttf" />
@@ -139,6 +141,9 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="assets\textures\isometric_demo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\CollisionSystem\Physics.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

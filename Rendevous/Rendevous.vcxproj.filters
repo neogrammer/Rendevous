@@ -2,6 +2,9 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="SERVER.cpp" />
+    <ClCompile Include="src\CollisionSystem\Physics.cpp">
+      <Filter>CollisionSystem</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="assets">
@@ -12,6 +15,9 @@
     </Filter>
     <Filter Include="assets\textures">
       <UniqueIdentifier>{db175cef-ea53-491f-b96a-9118b4ee205d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CollisionSystem">
+      <UniqueIdentifier>{d2a5bc36-1305-4a84-8886-913e71be4b56}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -29,5 +35,10 @@
     <Image Include="assets\textures\isometric_demo.png">
       <Filter>assets\textures</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\CollisionSystem\Physics.h">
+      <Filter>CollisionSystem</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
