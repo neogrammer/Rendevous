@@ -178,6 +178,13 @@ enum class AnimID : uint32_t { Idle = 0, Run=1, Attack=2 };
 enum class Dir : uint32_t { D = 0, DR, R, UR, U, UL, L, DL };
 enum class TEXT : uint32_t { POOPSIE };
 
+
+struct rect
+{
+    int32_t left{ 0 }, top{ 0 };
+    int32_t width{ 0 }, height{ 0 };
+};
+
 struct sPlayerDescription
 {
     uint32_t nUniqueID = 0;
@@ -257,13 +264,13 @@ static inline TEXT    to_text(uint32_t v) { return static_cast<TEXT>(v); }
 //}
 
 inline cnet::message<Msg>& operator<<(cnet::message<Msg>& m, const NeighborhoodTiles& nt) {
-    m << nt.playerId << nt.seq << nt.centerTx << nt.centerTy;
+    m << nt.playerId << nt.seq << nt.centerTx << nt.centerTy << nt.top << nt.left << nt.right << nt.bottom;
     for (uint32_t v : nt.tilesetIdx) m << v;
     return m;
 }
 inline cnet::message<Msg>& operator>>(cnet::message<Msg>& m, NeighborhoodTiles& nt) {
     for (int i = 8; i >= 0; --i) m >> nt.tilesetIdx[static_cast<size_t>(i)];
-    m >> nt.centerTy >> nt.centerTx >> nt.seq >> nt.playerId;
+    m >> nt.bottom >> nt.right >> nt.left >> nt.top >> nt.centerTy >> nt.centerTx >> nt.seq >> nt.playerId;
     return m;
 }
 

@@ -134,6 +134,7 @@
     <ClCompile Include="CLIENT.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="assets\textures\attack_sheet.png" />
     <Image Include="assets\textures\blocksTileSheet.png" />
     <Image Include="assets\textures\Eskibro.jpg" />
     <Image Include="assets\textures\idle_sheet.png" />
@@ -146,6 +147,7 @@
     <Font Include="assets\font\Crusty.ttf" />
     <Font Include="assets\font\font1.otf" />
     <Font Include="assets\font\font1.ttf" />
+    <Font Include="assets\font\font2.ttf" />
   </ItemGroup>
   <ItemGroup>
     <Media Include="assets\sounds\meow1.wav" />

@@ -18,6 +18,11 @@ struct NeighborhoodTiles {
     uint32_t seq = 0;   // ok to keep 0 for now
     int32_t  centerTx = 0;  // integer tile X at player’s FEET
     int32_t  centerTy = 0;  // integer tile Y at player’s FEET
+    int32_t top = 0;
+    int32_t left = 0;
+    int32_t right = 0;
+    int32_t bottom = 0;
+
     std::array<uint32_t, 9> tilesetIdx{}; // 3×3 row-major: TL..BR
 };
 

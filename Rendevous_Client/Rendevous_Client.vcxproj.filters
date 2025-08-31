@@ -59,6 +59,9 @@
     <Image Include="assets\textures\kittyLogo.png">
       <Filter>assets\textures</Filter>
     </Image>
+    <Image Include="assets\textures\attack_sheet.png">
+      <Filter>assets\textures</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Font Include="assets\font\Crusty.ttf">
@@ -68,6 +71,9 @@
       <Filter>assets\font</Filter>
     </Font>
     <Font Include="assets\font\font1.ttf">
+      <Filter>assets\font</Filter>
+    </Font>
+    <Font Include="assets\font\font2.ttf">
       <Filter>assets\font</Filter>
     </Font>
   </ItemGroup>
