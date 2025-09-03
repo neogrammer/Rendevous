@@ -10,8 +10,9 @@
 #include <cmath>
 #include <cstdlib>
 #include "../SnapshotTiles.h"
-
-
+#include "./src/CollisionSystem/Colliders.h"
+#include "./src/CollisionSystem/util.h"
+#include "./src/CollisionSystem/Physics.h"
 
 
 struct LatestNeighborhood {
@@ -42,16 +43,24 @@ public:
     std::string myMsg{ "Not in collision" };
     // Sim state
     std::unordered_map<uint32_t, PlayerData> playerDataMap;
-
+    sf::Texture dummyTex{ "assets/textures/isometric_demo.png" };
     float zHeightOffset = 156.f;
     std::unordered_map<uint32_t, PlayerIO>   playerIOMap;
     void collidePlayerWithNeighborhood(PlayerData& p, float dt)
     {
-        if (m_neighborhoods.size() == 0) { return; }
 
         auto it = m_neighborhoods.find(p.id);
-
+        if (it == m_neighborhoods.end() || !it->second.valid)
+        {
+            // No neighborhood tiles yet -> allow movement (or clamp)
+            p.xpos += p.xvel * dt;
+            p.ypos += p.yvel * dt;
+            return;
+        }
         rect& pRect = it->second.r;
+
+
+
 
         static const float SPEED = 500.f;
         float sx = 0.f, sy = 0.f;
@@ -101,16 +110,13 @@ public:
             }
         }
 
-        if (it == m_neighborhoods.end() || !it->second.valid) 
-        {
-            // No neighborhood tiles yet -> allow movement (or clamp)
-            p.xpos += p.xvel * dt;
-            p.ypos += p.yvel * dt;
-            return;
-        }
+       
        
         const LatestNeighborhood& N = it->second;
-        
+        p.xpos = N.r.left - 124.f;
+        p.ypos = N.r.top - 200.f;
+
+
         // Proposed movement
         float nextX = p.xpos + p.xvel * dt;
         float nextY = p.ypos + p.yvel * dt;
@@ -127,19 +133,19 @@ public:
         const int T = 128;                 // tile size (server constant)
         int i = 0;
         bool collided = false;
-        int colX0 = 0;
-        int colY0 = 0;
-        int colX1 = 0;
-        int colY1 = 0;
+        //int colX0 = 0;
+        //int colY0 = 0;
+        //int colX1 = 0;
+        //int colY1 = 0;
 
-        myMsg = "Not in collision:  Collide Box: x:";
+        /*myMsg = "Not in collision:  Collide Box: x:";
         myMsg.append(std::to_string(N.r.left));
         myMsg.append(", y:");
         myMsg.append(std::to_string(N.r.top));
         myMsg.append(", w:");
         myMsg.append(std::to_string(N.r.width));
         myMsg.append(", h:");
-        myMsg.append(std::to_string(N.r.height));
+        myMsg.append(std::to_string(N.r.height));*/
 
         for (int dy = -1; dy <= 1; ++dy) {
             for (int dx = -1; dx <= 1; ++dx, ++i) {
@@ -150,9 +156,20 @@ public:
                 if (type == TileCol::Walk) continue;
 
                 
+                auto mapIso = [&](const sf::Vector2f& pos) {
+                    float xIso = ((pos.x / (float)T) - (pos.y / (float)T)) * 0.5f * T;
+                    float yIso = ((pos.x / (float)T) + (pos.y / (float)T)) * 0.5f * (T / ((T == T) ? 2.f : 1.f));
+                    return sf::Vector2f{ xIso, yIso };
+                    };
+               // const int tx = N.cx + dx;
+               // const int ty = N.cy + dy;
+                sf::Vector2f offset{ 124.f,200.f };
+                auto playerIso = sf::Vector2f{ (N.r.left + N.r.width / 2.f) + p.xvel * dt, (N.r.top + N.r.height / 2.f) + p.yvel * dt };                
+                //auto invertIso = util::toCart( playerIso.x, playerIso.y, (float)T);
+                //invertIso *= (float)T;
+                const int tx = ((int)playerIso.x / T) + dx;
+                const int ty = ((int)playerIso.y / T) + dy;
 
-                const int tx = N.cx + dx;
-                const int ty = N.cy + dy;
                 const float tileX0 = tx * float(T);
                 const float tileY0 = ty * float(T);
                 const float tileX1 = tileX0 + float(T);
@@ -162,28 +179,89 @@ public:
                 if (tileX1 < 0.f || tileY1 < 0.f) { continue; }
             
                 if (type == TileCol::BlockFeet) {
-                    // Only collide with the bottom band (e.g., bottom 20%)
-                    const float band = 0.20f;
-                    const float by0 = tileY1 - band * float(T);
-                    const float by1 = tileY1;
-                    //if (N.r.left < 0 || N.r.top < 0) { continue; } // not a tile there at edge of map
-                    if (aabbOverlap((float)N.r.left, (float)N.r.top, ((float)N.r.left) + (float)N.r.width, ((float)N.r.top) + (float)N.r.height,(tileX0 ), tileY0, tileX1, tileY1))
-                    {
-                        collided = true;
-                        colX0 = (int)tileX0;
-                        colY0 = (int)tileY0;
-                        colX1 = (int)(tileX1 - tileX0);
-                        colY1 = (int)(tileY1 - tileY0);
 
-                        //aabbOverlap(pf_x0, pf_y0, pf_x1, pf_y1, tileX0, by0, tileX1, by1)) {
-                        // push player up to top of band
-                        //nextY = by0;  // feet touch band top
-                        // zero Y vel if moving into it
-                        //if (p.yvel > 0.f) p.yvel = 0.f;
-                        // recompute feet box after correction
-                        //pf_y0 = nextY - feetH;
-                       // pf_y1 = nextY;
+                    
+
+                    sf::Vector2f tilePos_iso{ mapIso({tileX0, tileY0}) };
+                    
+                    sf::Sprite playerSpr(dummyTex);
+                    
+                    playerSpr.setPosition({N.r.left + p.xvel * dt, N.r.top + p.yvel * dt});
+                    std::unique_ptr<Collider> playerCollider = std::make_unique<BoxCollider>(playerSpr, 50.f, 30.f);
+
+                    sf::Sprite tileSpr(dummyTex);
+                    tileSpr.setPosition({ tileX0, tileY0 });
+                    std::unique_ptr<Collider> tileCollider = std::make_unique<IsoTileCollider>(tileSpr);
+
+                    if (Physics::DetectAndResolve(*playerCollider, *tileCollider))
+                    {
+                        nextX = playerCollider->getSprite().getPosition().x - offset.x;
+                        nextY = playerCollider->getSprite().getPosition().y - offset.y;
+
                     }
+
+
+
+                    //switch (i % 3)
+                    //{
+                    //case (1):  // tile to left of tx in screenspace
+                    //{
+                    //    tilePos_world.x = tileX0 - float(T);
+                    //    
+                    //}
+                    //    break;
+                    //case (2):
+                    //{
+
+                    //    tilePos_world.x = tileX0;
+                    //    
+                    //}
+                    //break;
+                    //case (0): // tile to left of tx in screenspace
+                    //{
+                    //    tilePos_world.x = tileX0 + float(T);
+                    //}
+                    //break;
+                    //default:
+                    //{}
+                    //break;
+                    //}
+                    //if (i < 3) // top row
+                    //{
+
+                    //    tilePos_world.y = tileY0 - float(T);
+                    //}
+                    //else if (i > 5) // bottom row
+                    //{
+                    //    tilePos_world.y = tileY0 + float(T);
+                    //}
+                    //else if (i == 3 || i == 5)
+                    //{
+                    //    tilePos_world.y = tileY0;
+                    //}
+
+                    // Only collide with the bottom band (e.g., bottom 20%)
+                    //const float band = 0.20f;
+                    //const float by0 = tileY1 - band * float(T);
+                    //const float by1 = tileY1;
+                    ////if (N.r.left < 0 || N.r.top < 0) { continue; } // not a tile there at edge of map
+                    //if (aabbOverlap((float)N.r.left, (float)N.r.top, ((float)N.r.left) + (float)N.r.width, ((float)N.r.top) + (float)N.r.height,(tileX0 ), tileY0, tileX1, tileY1))
+                    //{
+                    //    collided = true;
+                    //    colX0 = (int)tileX0;
+                    //    colY0 = (int)tileY0;
+                    //    colX1 = (int)(tileX1 - tileX0);
+                    //    colY1 = (int)(tileY1 - tileY0);
+
+                    //    //aabbOverlap(pf_x0, pf_y0, pf_x1, pf_y1, tileX0, by0, tileX1, by1)) {
+                    //    // push player up to top of band
+                    //    //nextY = by0;  // feet touch band top
+                    //    // zero Y vel if moving into it
+                    //    //if (p.yvel > 0.f) p.yvel = 0.f;
+                    //    // recompute feet box after correction
+                    //    //pf_y0 = nextY - feetH;
+                    //   // pf_y1 = nextY;
+                    //}
                    
                 }
                 else if (type == TileCol::RampR || type == TileCol::RampL) {
@@ -195,7 +273,7 @@ public:
                 }
             }
         }
-        if (collided)
+       /* if (collided)
         {
             myMsg = "Collided with blocking tile:  Collide Box: x:";
             myMsg.append(std::to_string(N.r.left));
@@ -214,7 +292,7 @@ public:
             myMsg.append(", h:");
             myMsg.append(std::to_string(colY1));
 
-        }
+        }*/
 
         p.xpos = nextX;
         p.ypos = nextY;

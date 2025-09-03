@@ -34,18 +34,18 @@ inline NeighborhoodTiles makeNeighborhoodPacket(
     uint32_t playerId, uint32_t seq,
     const TileLayer & map, int playerFeetX, int playerFeetY, uint32_t** mapDD)
 {
-    const int tx = (playerFeetX) / 128;
-    const int ty = (playerFeetY) / 128;
+    const int tx = ((playerFeetX) + 124.f + 25.f) / 128;
+    const int ty = ((playerFeetY) + 200.f + 15.f) / 128;
 
     NeighborhoodTiles pkt{};
     pkt.playerId = playerId;
     pkt.seq = seq;
     pkt.centerTx = tx;
     pkt.centerTy = ty;
-    pkt.left = playerFeetX;
-    pkt.top = playerFeetY;
-    pkt.right = pkt.left + playerWidth;
-    pkt.bottom = pkt.top + playerHeight;
+    pkt.left = playerFeetX + 124.f;
+    pkt.top = playerFeetY + 200.f;
+    pkt.right = pkt.left + 50.f;
+    pkt.bottom = pkt.top + 30.f;
    
 
     int i = 0;
@@ -505,7 +505,7 @@ public:
                         tLayer.height = 45;
                         tLayer.data = mapData;
 
-                        auto feet = sf::Vector2i{ (int)playerPos.x, (int)playerPos.y + (int)playerZHeightOffset};
+                        auto feet = sf::Vector2i{ (int)playerPos.x, (int)playerPos.y};
                         uint32_t* mapDD = mapData;
                         NeighborhoodTiles nt = makeNeighborhoodPacket(nPlayerID, 0, tLayer,  feet.x, feet.y, &mapDD);
                         cnet::message<Msg> m;

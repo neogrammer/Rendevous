@@ -132,7 +132,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="SERVER.cpp" />
+    <ClCompile Include="src\CollisionSystem\BoxCollider.cpp" />
+    <ClCompile Include="src\CollisionSystem\Collider.cpp" />
+    <ClCompile Include="src\CollisionSystem\IsoTileCollider.cpp" />
     <ClCompile Include="src\CollisionSystem\Physics.cpp" />
+    <ClCompile Include="src\CollisionSystem\util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="assets\font\Crusty.ttf" />
@@ -143,7 +147,12 @@
     <Image Include="assets\textures\isometric_demo.png" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\CollisionSystem\BoxCollider.h" />
+    <ClInclude Include="src\CollisionSystem\Collider.h" />
+    <ClInclude Include="src\CollisionSystem\Colliders.h" />
+    <ClInclude Include="src\CollisionSystem\IsoTileCollider.h" />
     <ClInclude Include="src\CollisionSystem\Physics.h" />
+    <ClInclude Include="src\CollisionSystem\util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
