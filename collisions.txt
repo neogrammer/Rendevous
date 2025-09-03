@@ -1,0 +1,186 @@
+// iso_shared.h
+#pragma once
+#include <cmath>
+
+namespace iso {
+    static constexpr int TILE_W = 128;   // diamond width in screen px
+    static constexpr int TILE_H = 64;    // diamond height in screen px
+    struct Origin { float sx=0.f, sy=0.f; };
+
+    inline void gridToScreen(int i,int j,const Origin& o,float& sx,float& sy){
+        sx = o.sx + ( (i - j) * (TILE_W * 0.5f) );
+        sy = o.sy + ( (i + j) * (TILE_H * 0.5f) );
+    }
+}
+cpp
+Copy code
+// colliders.h
+#pragma once
+#include "iso_shared.h"
+#include <SFML/Graphics.hpp>
+#include <array>
+
+struct Collider {
+    sf::Vector2f pos;                       // reference (player feet center or tile center)
+    std::array<sf::Vector2f,4> pts;         // polygon vertices (screen space)
+    const sf::Vector2f& getPos() const { return pos; }
+    std::array<sf::Vector2f,4> getPoints() const { return pts; }
+    void moveBy(const sf::Vector2f& d){ pos+=d; for(auto& p:pts) p+=d; }
+};
+
+inline Collider makeFeetCollider(const sf::Vector2f& feetCenter,float w,float h){
+    Collider c; c.pos = feetCenter;
+    const float x0 = feetCenter.x - w*0.5f, y0 = feetCenter.y - h;
+    c.pts = {{ {x0,y0},{x0+w,y0},{x0+w,y0+h},{x0,y0+h} }};
+    return c;
+}
+
+inline Collider makeDiamondCollider(int i,int j,const iso::Origin& o){
+    float sx,sy; iso::gridToScreen(i,j,o,sx,sy);
+    Collider c; c.pos = {sx,sy};
+    c.pts = {{
+        {sx - iso::TILE_W*0.5f, sy},
+        {sx,                    sy - iso::TILE_H*0.5f},
+        {sx + iso::TILE_W*0.5f, sy},
+        {sx,                    sy + iso::TILE_H*0.5f}
+    }};
+    return c;
+}
+
+
+
+// physics.h
+#pragma once
+#include "colliders.h"
+#include <cmath>
+
+inline sf::Vector2f DetectAndResolve_Displacement(const Collider& r1_in,
+                                                  const Collider& r2_in,
+                                                  bool& collidedOut)
+{
+    collidedOut = false;
+    sf::Vector2f total{0,0};
+
+    for (int shape = 0; shape < 2; ++shape) {
+        const Collider& A = (shape==0? r1_in : r2_in);
+        const Collider& B = (shape==0? r2_in : r1_in);
+
+        sf::Vector2f disp{0,0};
+        const auto Apts = A.getPoints();
+        const auto Bpts = B.getPoints();
+
+        for (int p=0; p<4; ++p) {
+            const sf::Vector2f As = A.getPos();
+            const sf::Vector2f Ae = Apts[p];
+
+            for (int q=0; q<4; ++q) {
+                const sf::Vector2f Bs = Bpts[q];
+                const sf::Vector2f Be = Bpts[(q+1)%Bpts.size()];
+
+                const float den = (Be.x-Bs.x)*(As.y-Ae.y) - (As.x-Ae.x)*(Be.y-Bs.y);
+                if (std::fabs(den) < 1e-6f) continue;
+
+                const float t1 = ((Bs.y-Be.y)*(As.x-Bs.x) + (Be.x-Bs.x)*(As.y-Bs.y)) / den;
+                const float t2 = ((As.y-Ae.y)*(As.x-Bs.x) + (Ae.x-As.x)*(As.y-Bs.y)) / den;
+
+                if (t1>=0.f && t1<1.f && t2>=0.f && t2<1.f) {
+                    collidedOut = true;
+                    disp.x += (1.f - t1) * (Ae.x - As.x);
+                    disp.y += (1.f - t1) * (Ae.y - As.y);
+                }
+            }
+        }
+
+        if (shape==0) { total.x += -disp.x; total.y += -disp.y; }
+        else          { total.x +=  disp.x; total.y +=  disp.y; }
+    }
+    return total;
+}
+
+
+
+// server_resolve_iso.h
+#pragma once
+#include "physics.h"
+
+// Tune feet box (screen px)
+static constexpr float FEET_W = 48.f;
+static constexpr float FEET_H = 22.f;
+
+// tiles[j*W+i] == 0 => solid
+inline void resolve_PlayerVsIsoTiles(
+    float& sx, float& sy,           // IN/OUT player feet center (screen)
+    float dx, float dy,             // intended movement (screen)
+    const std::vector<uint8_t>& tiles, int W, int H,
+    const iso::Origin& origin)
+{
+    // 1) Start/end feet colliders (screen)
+    Collider endFeet = makeFeetCollider({sx+dx, sy+dy}, FEET_W, FEET_H);
+
+    // 2) Compute a small candidate window in grid space by converting the
+    //    moved feet AABB corners to grid indices (pad by 1).
+    auto aabb = [&](const Collider& c){
+        float minx=c.pts[0].x, miny=c.pts[0].y, maxx=minx, maxy=miny;
+        for (auto& p: c.pts){ minx=std::min(minx,p.x); miny=std::min(miny,p.y);
+                              maxx=std::max(maxx,p.x); maxy=std::max(maxy,p.y);}
+        return std::array<float,4>{minx,miny,maxx,maxy};
+    };
+    const auto r = aabb(endFeet);
+
+    // helper: screen->grid inverse of diamond map
+    auto scr2grid = [&](float sx,float sy)->std::pair<float,float>{
+        const float x = sx - origin.sx;
+        const float y = sy - origin.sy;
+        const float A = x / (iso::TILE_W * 0.5f);
+        const float B = y / (iso::TILE_H * 0.5f);
+        return { (B + A)*0.5f, (B - A)*0.5f }; // (i,j) as floats
+    };
+
+    auto [gi0,gj0] = scr2grid(r[0], r[1]);
+    auto [gi1,gj1] = scr2grid(r[2], r[1]);
+    auto [gi2,gj2] = scr2grid(r[0], r[3]);
+    auto [gi3,gj3] = scr2grid(r[2], r[3]);
+
+    int minI = (int)std::floor(std::min(std::min(gi0,gi1), std::min(gi2,gi3))) - 1;
+    int maxI = (int)std::floor(std::max(std::max(gi0,gi1), std::max(gi2,gi3))) + 1;
+    int minJ = (int)std::floor(std::min(std::min(gj0,gj1), std::min(gj2,gj3))) - 1;
+    int maxJ = (int)std::floor(std::max(std::max(gj0,gj1), std::max(gj2,gj3))) + 1;
+
+    auto inBounds=[&](int i,int j){return i>=0&&i<W&&j>=0&&j<H;};
+    auto solidAt=[&](int i,int j){return !inBounds(i,j) || tiles[j*W+i]==0;}; // OOB = solid
+
+    // 3) Accumulate displacement by colliding END feet vs each solid diamond (screen!)
+    sf::Vector2f accum{0,0};
+    for (int j=minJ; j<=maxJ; ++j)
+    for (int i=minI; i<=maxI; ++i)
+    {
+        if (!solidAt(i,j)) continue;
+        Collider tile = makeDiamondCollider(i,j, origin);
+
+        bool hit=false;
+        const sf::Vector2f d = DetectAndResolve_Displacement(endFeet, tile, hit);
+        if (hit) {
+            endFeet.moveBy(d);   // update shape so subsequent tiles see corrected position
+            accum += d;
+        }
+    }
+
+    // 4) Commit: ONLY the player (screen) is updated. Tiles never converted to grid for the player.
+    sx = endFeet.pos.x;
+    sy = endFeet.pos.y;
+}
+
+
+// inside server tick when applying one ClientInput
+void applyInputServer(float& sx,float& sy,float ax,float ay,float dt,
+                      const std::vector<uint8_t>& tiles,int W,int H,const iso::Origin& o)
+{
+    // normalize axis; no faster diagonal
+    float len = std::sqrt(ax*ax+ay*ay); if (len>1e-5f){ ax/=len; ay/=len; }
+    const float SPEED = 160.f;
+    const float dx = ax * SPEED * dt;
+    const float dy = ay * SPEED * dt;
+
+    resolve_PlayerVsIsoTiles(sx, sy, dx, dy, tiles, W, H, o);
+}
+

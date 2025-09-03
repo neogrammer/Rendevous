@@ -1,0 +1,132 @@
+What a BLE collector is (for our system)
+
+A BLE collector is a small program or service that runs near the beacons/tags (phone, tablet, Raspberry Pi, mini-PC, or a dedicated gateway). Its job is to:
+
+Scan for BLE advertisements from nearby tags/beacons.
+
+Parse each advertisement (tag ID, beacon ID/UUID/major/minor if applicable).
+
+Measure the signal strength (RSSI) and timestamp it.
+
+Batch recent readings into JSON.
+
+Send that JSON to our Status API over HTTPS, which calls usp_RssiReadings_InsertJson to store them.
+
+[Tags/Beacons] --BLE--> [BLE Collector] --HTTPS(JSON)--> [Status API] --> [Azure SQL: rssi_reading + procs]
+
+Where it runs
+
+Phone/tablet (Android/iOS) in kiosk/background mode.
+
+Raspberry Pi with a BLE dongle (popular, cheap).
+
+Dedicated BLE gateway (commercial device) with a small app/agent.
+
+Windows/Linux mini-PC with BLE adapter.
+
+What it sends (example JSON)
+
+This is the shape that usp_RssiReadings_InsertJson expects (fields can be extended—this shows the essentials):
+
+{
+  "collectorId": "pi-01",
+  "readings": [
+    {
+      "tagId": "TAG-12345",
+      "beaconUuid": "fda50693-a4e2-4fb1-afcf-c6eb07647825",
+      "beaconMajor": 100,
+      "beaconMinor": 7,
+      "rssi": -68,
+      "timestampUtc": "2025-09-02T16:03:25Z",
+      "extra": {"scanIntervalMs": 500}
+    },
+    {
+      "tagId": "TAG-12345",
+      "beaconUuid": "fda50693-a4e2-4fb1-afcf-c6eb07647825",
+      "beaconMajor": 100,
+      "beaconMinor": 8,
+      "rssi": -74,
+      "timestampUtc": "2025-09-02T16:03:25Z"
+    }
+  ]
+}
+
+
+POST to your API (example curl):
+
+curl -X POST "https://<your-app>.azurewebsites.net/api/ingest/rssi" \
+  -H "Content-Type: application/json" \
+  -d @payload.json
+
+
+(Your API endpoint will deserialize this and pass it into usp_RssiReadings_InsertJson.)
+
+Core responsibilities checklist
+
+BLE scanning: continuous or duty-cycled; filter by known UUID(s) to reduce noise.
+
+Timestamping: use UTC; sync time (NTP) so readings align across collectors.
+
+Batching & backoff: send in small batches; retry with exponential backoff on network errors.
+
+Local buffer: if offline, persist to disk and flush later; avoid data loss.
+
+De-duplication: optionally drop obvious duplicates before sending.
+
+Security: HTTPS only; add an API key or Entra token once the API is secured.
+
+Identification: include collectorId and (optionally) firmware/app version for diagnostics.
+
+Throttling: cap send rate/size to protect the API and your network.
+
+Observability: basic logs; counters for “readings scanned/sent/failed/queued.”
+
+Minimal data elements per reading
+
+tagId (or parsed from advertisement payload)
+
+beaconUuid (and major/minor if iBeacon-style) or beaconId that your DB knows
+
+rssi (integer, e.g., -35 to -100 dBm)
+
+timestampUtc (ISO 8601)
+
+optional extra JSON for debug/metadata (scanner power, scan interval, txPower if provided)
+
+How the collector fits the database flow
+
+Collector → API → usp_RssiReadings_InsertJson → rows in rssi_reading.
+
+A job (or API trigger) runs trilateration:
+
+usp_Trilateration_CreateRun (define window + params)
+
+compute positions
+
+usp_Trilateration_InsertResultAndEmitDhe (write trilat_result and emit DHE)
+
+UI/API queries views and SPs:
+
+usp_CurrentLocation_ByMrn for latest location
+
+usp_PatientTimeline_ByMrn for patient timeline
+
+Practical implementation options
+
+Android (Kotlin) foreground service using BluetoothLeScanner.
+
+iOS (Swift) using CoreBluetooth (consider background limits).
+
+Raspberry Pi (Python): bluepy/bleson/bleak for scanning; requests for HTTPS.
+
+Node.js: @abandonware/noble for scanning; axios for HTTPS.
+
+C# on Windows: UWP/WinRT BLE APIs; on Linux, BlueZ via D-Bus wrappers.
+
+If you want, I can give you a tiny Raspberry Pi Python script or an Android Kotlin snippet that:
+
+scans for a whitelist of beacon UUIDs,
+
+batches readings every N seconds, and
+
+POSTs them to your API in the JSON format above.
