@@ -37,6 +37,8 @@ public:
 
     std::array<sf::Vector2f, 4> getPoints();
 
+    sf::Vector2f getCenter() override;
+
 };
 
 

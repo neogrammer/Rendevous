@@ -36,3 +36,8 @@ std::array<sf::Vector2f, 4> IsoTileCollider::getPoints()
     }
     return arr;
 }
+
+sf::Vector2f IsoTileCollider::getCenter()
+{
+    return spr.getPosition() + center;
+}

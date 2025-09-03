@@ -49,3 +49,10 @@ std::array<sf::Vector2f, 4> BoxCollider::getPoints()
     }
     return arr;
 }
+
+sf::Vector2f BoxCollider::getCenter()
+{
+ 
+    return spr.getPosition() + center;
+
+}

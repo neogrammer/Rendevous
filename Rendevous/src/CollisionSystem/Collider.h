@@ -16,6 +16,7 @@ public:
     virtual sf::Vector2f getPos() = 0;
     virtual sf::Vector2f getPoint(int idx_) = 0;
     virtual std::array<sf::Vector2f, 4> getPoints() = 0;
+    virtual sf::Vector2f getCenter() = 0;
 };
 
 

@@ -15,6 +15,7 @@
 #include "./src/CollisionSystem/Physics.h"
 
 
+
 struct LatestNeighborhood {
     uint32_t seq = 0;
     int32_t  cx = 0, cy = 0;
@@ -36,8 +37,13 @@ static inline bool aabbOverlap(float ax0, float ay0, float ax1, float ay1,
 
 class GameServer : public cnet::server_interface<Msg>
 {
-    
+public:
+    sf::Vector2f getPlayerColliderPos( sf::Sprite& player_);
+    sf::Vector2f getTileColliderPos(sf::Sprite& spr_);
 
+    bool updateState();
+    void renderServerDisplay(sf::RenderWindow& window);
+    public:
     bool hasTilesToCheck{ false };
 public:
     std::string myMsg{ "Not in collision" };
@@ -133,19 +139,6 @@ public:
         const int T = 128;                 // tile size (server constant)
         int i = 0;
         bool collided = false;
-        //int colX0 = 0;
-        //int colY0 = 0;
-        //int colX1 = 0;
-        //int colY1 = 0;
-
-        /*myMsg = "Not in collision:  Collide Box: x:";
-        myMsg.append(std::to_string(N.r.left));
-        myMsg.append(", y:");
-        myMsg.append(std::to_string(N.r.top));
-        myMsg.append(", w:");
-        myMsg.append(std::to_string(N.r.width));
-        myMsg.append(", h:");
-        myMsg.append(std::to_string(N.r.height));*/
 
         for (int dy = -1; dy <= 1; ++dy) {
             for (int dx = -1; dx <= 1; ++dx, ++i) {
@@ -273,26 +266,6 @@ public:
                 }
             }
         }
-       /* if (collided)
-        {
-            myMsg = "Collided with blocking tile:  Collide Box: x:";
-            myMsg.append(std::to_string(N.r.left));
-            myMsg.append(", y:");
-            myMsg.append(std::to_string(N.r.top));
-            myMsg.append(", w:");
-            myMsg.append(std::to_string(N.r.width));
-            myMsg.append(", h:");
-            myMsg.append(std::to_string(N.r.height));
-            myMsg.append("  \nAnd Box Collided with: x:");
-            myMsg.append(std::to_string(colX0));
-            myMsg.append(", y:");
-            myMsg.append(std::to_string(colY0));
-            myMsg.append(", w:");
-            myMsg.append(std::to_string(colX1));
-            myMsg.append(", h:");
-            myMsg.append(std::to_string(colY1));
-
-        }*/
 
         p.xpos = nextX;
         p.ypos = nextY;
@@ -311,7 +284,7 @@ public:
         0, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0
 
     };
-
+    public:
     // Debug
     uint32_t ioU{}, ioD{}, ioL{}, ioR{}, ioSpace{};
 
@@ -641,15 +614,15 @@ int main(int argc, char* argv[])
     GameServer server(60000);
     server.Start();
 
-    sf::RenderWindow window(sf::VideoMode({ 1280, 920 }), "GameServer!");
+    sf::RenderWindow window(sf::VideoMode({ 600, 400 }), "GameServer!");
     if (!window.isOpen()) return 420;
-    window.setPosition(sf::Vector2i(1670, 520));
+    window.setPosition(sf::Vector2i(1200, 200));
 
     // Hide console window
     HWND hWnd = GetConsoleWindow();
     ShowWindow(hWnd, SW_HIDE);
 
-    sf::Font crustyFont{ "assets/font/font2.ttf" };
+    
 
     // Fixed timestep
     const float dt = 1.0f / 60.0f;
@@ -667,79 +640,112 @@ int main(int argc, char* argv[])
             if (ev->is<sf::Event::Closed>()) window.close();
         }
 
-        // Fixed update loop
-        accumulator += clock.restart().asSeconds();
-        while (accumulator >= dt)
-        {
-            server.Simulate(dt);
-            accumulator -= dt;
-        }
-
-        // Send snapshot for this rendered frame
+        server.updateState();
+        // Send snapshot for this rendered0 frame
         server.BroadcastSnapshot();
 
-        // Debug draw
-        window.clear();
-
-        // Show text messages (your original layout kept)
-        std::vector<int> lastSize;
-        static int totalSizeOffset = 0;
-        static float bottomY = 0.f;
-        if (!server.m_messagesToDisplay.empty())
-        {
-            int i = 0;
-            lastSize.push_back(0);
-            for (auto& e : server.m_messagesToDisplay)
-            {
-                for (int sz = 0; sz < (int)e.second.size(); sz++)
-                {
-                    totalSizeOffset = 0;
-                    for (auto& l : lastSize) totalSizeOffset += (int)l * 32;
-
-                    sf::Text text{ crustyFont };
-                    text.setCharacterSize(32U);
-                    bottomY = 10.f + (sz * 32.f) + totalSizeOffset + 8.f;
-                    text.setPosition({ 30.f, bottomY });
-                    text.setFillColor(sf::Color::Red);
-                    text.setOutlineColor(sf::Color::White);
-                    text.setOutlineThickness(2.f);
-                    text.setString(server.m_msgStrLUT[e.second.at(sz)]);
-                    window.draw(text);
-                }
-                lastSize.push_back((int)e.second.size());
-                i++;
-            }
-        }
-        {
-            sf::Text text{ crustyFont };
-            text.setCharacterSize(32U);
-            bottomY = 10.f + (server.m_messagesToDisplay.size() * 32.f) + float(bottomY) + 8.f;
-            text.setPosition({ 30.f,bottomY });
-            text.setFillColor(sf::Color::Red);
-            text.setOutlineColor(sf::Color::White);
-            text.setOutlineThickness(2.f);
-            std::string str = std::to_string(server.ioD) + " " + std::to_string(server.ioL) + " " +
-                std::to_string(server.ioU) + " " + std::to_string(server.ioR) + " " + std::to_string(server.ioSpace);
-            text.setString(server.myMsg);
-            window.draw(text);
-        }
-
-        // draw each roster entry without inserting new ones
-        float y = bottomY;
-        for (const auto& [id, desc] : server.m_mapPlayerRoster) {
-            sf::Text text{ crustyFont };
-            text.setCharacterSize(32U);
-            y += 40.f;
-            text.setPosition({ 30.f, y });
-            text.setFillColor(sf::Color::Red);
-            text.setOutlineColor(sf::Color::White);
-            text.setOutlineThickness(2.f);
-            text.setString("PlayerID: " + std::to_string(desc.nUniqueID));
-            window.draw(text);
-        }
-
-        window.display();
+        server.renderServerDisplay(window);
+       
     }
 
     return 0;
+}
+
+sf::Vector2f GameServer::getPlayerColliderPos(sf::Sprite& player_)
+{
+    sf::Vector2f pos{};
+
+    std::unique_ptr<Collider> col = std::make_unique<BoxCollider>(player_, 50.f, 30.f);
+
+    pos = col->getCenter();
+
+    return pos;
+}
+
+sf::Vector2f GameServer::getTileColliderPos(sf::Sprite& spr_)
+{
+    sf::Vector2f pos{};
+
+    return pos;
+}
+
+bool GameServer::updateState()
+{
+    static float accumulator = 0;
+    static sf::Clock clock = {};
+    static float fps60 = 1.f / 60.f;
+    float dt_ = clock.restart().asSeconds();
+    accumulator += dt_;
+    while (accumulator >= fps60)
+    {
+        this->Simulate(fps60);
+        accumulator -= fps60;
+    }
+    
+    return true;
+}
+
+void GameServer::renderServerDisplay(sf::RenderWindow& window)
+{
+    // Debug draw
+    window.clear();
+    static sf::Font crustyFont{ "assets/font/font2.ttf" };
+    // Show text messages (your original layout kept)
+    std::vector<int> lastSize;
+    static int totalSizeOffset = 0;
+    static float bottomY = 0.f;
+    if (!this->m_messagesToDisplay.empty())
+    {
+        int i = 0;
+        lastSize.push_back(0);
+        for (auto& e : this->m_messagesToDisplay)
+        {
+            for (int sz = 0; sz < (int)e.second.size(); sz++)
+            {
+                totalSizeOffset = 0;
+                for (auto& l : lastSize) totalSizeOffset += (int)l * 32;
+
+                sf::Text text{ crustyFont };
+                text.setCharacterSize(32U);
+                bottomY = 10.f + (sz * 32.f) + totalSizeOffset + 8.f;
+                text.setPosition({ 30.f, bottomY });
+                text.setFillColor(sf::Color::Red);
+                text.setOutlineColor(sf::Color::White);
+                text.setOutlineThickness(2.f);
+                text.setString(this->m_msgStrLUT[e.second.at(sz)]);
+                window.draw(text);
+            }
+            lastSize.push_back((int)e.second.size());
+            i++;
+        }
+    }
+    {
+        sf::Text text{ crustyFont };
+        text.setCharacterSize(32U);
+        bottomY = 10.f + (this->m_messagesToDisplay.size() * 32.f) + float(bottomY) + 8.f;
+        text.setPosition({ 30.f,bottomY });
+        text.setFillColor(sf::Color::Red);
+        text.setOutlineColor(sf::Color::White);
+        text.setOutlineThickness(2.f);
+        std::string str = std::to_string(this->ioD) + " " + std::to_string(this->ioL) + " " +
+            std::to_string(this->ioU) + " " + std::to_string(this->ioR) + " " + std::to_string(this->ioSpace);
+        text.setString(this->myMsg);
+        window.draw(text);
+    }
+
+    // draw each roster entry without inserting new ones
+    float y = bottomY;
+    for (const auto& [id, desc] : this->m_mapPlayerRoster) {
+        sf::Text text{ crustyFont };
+        text.setCharacterSize(32U);
+        y += 40.f;
+        text.setPosition({ 30.f, y });
+        text.setFillColor(sf::Color::Red);
+        text.setOutlineColor(sf::Color::White);
+        text.setOutlineThickness(2.f);
+        text.setString("PlayerID: " + std::to_string(desc.nUniqueID));
+        window.draw(text);
+    }
+
+    window.display();
 }

@@ -34,18 +34,18 @@ inline NeighborhoodTiles makeNeighborhoodPacket(
     uint32_t playerId, uint32_t seq,
     const TileLayer & map, int playerFeetX, int playerFeetY, uint32_t** mapDD)
 {
-    const int tx = ((playerFeetX) + 124.f + 25.f) / 128;
-    const int ty = ((playerFeetY) + 200.f + 15.f) / 128;
+    const int tx = ((playerFeetX) + 124 + 25) / 128;
+    const int ty = ((playerFeetY) + 200 + 15) / 128;
 
     NeighborhoodTiles pkt{};
     pkt.playerId = playerId;
     pkt.seq = seq;
     pkt.centerTx = tx;
     pkt.centerTy = ty;
-    pkt.left = playerFeetX + 124.f;
-    pkt.top = playerFeetY + 200.f;
-    pkt.right = pkt.left + 50.f;
-    pkt.bottom = pkt.top + 30.f;
+    pkt.left = playerFeetX + 124i32;
+    pkt.top = playerFeetY + 200i32;
+    pkt.right = pkt.left + 50i32;
+    pkt.bottom = pkt.top + 30i32;
    
 
     int i = 0;
@@ -94,8 +94,8 @@ private:
     bool inEditMode = false;
     std::vector<sf::Sprite> tilemap;
 
-    const unsigned SCRW = 1600;
-    const unsigned SCRH = 900;
+    const unsigned SCRW = 1024;
+    const unsigned SCRH = 576;
     int currTSetRows = 0;
     int currTSetCols = 0;
     bool startingAttack = false;
@@ -298,9 +298,9 @@ public:
             for (int j = 0; j < 17; ++j)
                 playerAnimFrames[2][i].emplace_back(sf::IntRect{ {j * playerWidth, i * playerHeight},{playerWidth,playerHeight} });
         }
-
+        
         // Connect
-        while (!Connect("192.168.0.5", 60000)) {}
+        while (!Connect("127.0.0.1", 60000)) {}
         //24.236.104.52
         //
         //phone: 10.143.2.210
