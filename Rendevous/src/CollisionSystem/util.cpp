@@ -11,7 +11,6 @@ sf::Vector2f util::toIso(sf::Vector2f cart)
     return { xIso,yIso };
 }
 
-
 sf::Vector2f util::toCart(float screenX, float screenY, float tileSize) {
     float mapx = (screenX / tileSize + screenY / (tileSize * 0.5f)) * 0.5f;
     float mapy = (screenY / (tileSize * 0.5f) - (screenX / tileSize)) * 0.5f;

@@ -24,47 +24,73 @@
 constexpr int playerWidth = 299;
 constexpr int playerHeight = 240;
 
-struct TileLayer {
+struct TileLayer 
+{
     int width, height;        // in tiles
     int tileSize;             // pixels
     const uint32_t* data;     // map[t] = tileset index at that map cell
 };
-
-inline NeighborhoodTiles makeNeighborhoodPacket(
-    uint32_t playerId, uint32_t seq,
-    const TileLayer & map, int playerFeetX, int playerFeetY, uint32_t** mapDD)
-{
-    const int tx = ((playerFeetX) + 124 + 25) / 128;
-    const int ty = ((playerFeetY) + 200 + 15) / 128;
-
-    NeighborhoodTiles pkt{};
-    pkt.playerId = playerId;
-    pkt.seq = seq;
-    pkt.centerTx = tx;
-    pkt.centerTy = ty;
-    pkt.left = playerFeetX + 124i32;
-    pkt.top = playerFeetY + 200i32;
-    pkt.right = pkt.left + 50i32;
-    pkt.bottom = pkt.top + 30i32;
-   
-
-    int i = 0;
-    for (int dy = -1; dy <= 1; ++dy) {
-        for (int dx = -1; dx <= 1; ++dx) {
-            const int qx = tx + dx;
-            const int qy = ty + dy;
-            uint32_t tilesetIndex = 0;
-            if (qx >= 0 && qy >= 0 && qx < map.width && qy < map.height) {
-                tilesetIndex = (*mapDD)[qy * map.width + qx]; // tileset index used by that map cell
-            }
-            pkt.tilesetIdx[i++] = tilesetIndex;
-        }
-    }
-    return pkt;
-}
+//
+//inline NeighborhoodTiles makeNeighborhoodPacket(uint32_t playerId, uint32_t seq, const TileLayer & map, int playerFeetX, int playerFeetY, uint32_t** mapDD)
+//{
+//    const int tx = ((playerFeetX) + 124 + 25) / 128;
+//    const int ty = ((playerFeetY) + 200 + 15) / 128;
+//
+//    NeighborhoodTiles pkt{};
+//    pkt.playerId = playerId;
+//    pkt.seq = seq;
+//    pkt.centerTx = tx;
+//    pkt.centerTy = ty;
+//    pkt.left = playerFeetX + 124i32;
+//    pkt.top = playerFeetY + 200i32;
+//    pkt.right = pkt.left + 50i32;
+//    pkt.bottom = pkt.top + 30i32;
+//   
+//
+//    int i = 0;
+//    for (int dy = -1; dy <= 1; ++dy) {
+//        for (int dx = -1; dx <= 1; ++dx) {
+//            const int qx = tx + dx;
+//            const int qy = ty + dy;
+//            uint32_t tilesetIndex = 0;
+//            if (qx >= 0 && qy >= 0 && qx < map.width && qy < map.height) {
+//                tilesetIndex = (*mapDD)[qy * map.width + qx]; // tileset index used by that map cell
+//            }
+//            pkt.tilesetIdx[i++] = tilesetIndex;
+//        }
+//    }
+//    return pkt;
+//}
 
 class Client : public cnet::client_interface<Msg>
 {
+public:
+    void run()
+    {
+        initAssets();
+
+        while (wnd->isOpen())
+        {
+            while (const std::optional ev = wnd->pollEvent())
+            {
+                if (ev->is<sf::Event::Closed>()) wnd->close();
+                if (auto keyRel = ev->getIf<sf::Event::KeyReleased>()) {
+                    if (keyRel->code == sf::Keyboard::Key::M) inEditMode = !inEditMode;
+                }
+            }
+
+            // Example text send on key tap
+            static bool keydown = false;
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::I)) keydown = true;
+            else if (keydown) { keydown = false; sendMessageMsg(TEXT::POOPSIE); }
+
+            elapsed = timer.restart().asSeconds();
+
+            Update(elapsed);
+            Render();
+        }
+    }
+private:
     bool moving{ false };
 public:
     Client() { wnd = new sf::RenderWindow{}; }
@@ -309,7 +335,7 @@ public:
         return true;
     }
 
-    void run()
+    void initAssets()
     {
         // Build tileset/tilemap (kept like your code)
         const int numCols = currTSetCols, numRows = currTSetRows, numTiles = numCols * numRows;
@@ -332,28 +358,9 @@ public:
             t.setTextureRect({ sf::Vector2i{tileset[mapData[i]].getTextureRect().position},
                                sf::Vector2i{tileset[mapData[i]].getTextureRect().size} });
         }
-
-        while (wnd->isOpen())
-        {
-            while (const std::optional ev = wnd->pollEvent())
-            {
-                if (ev->is<sf::Event::Closed>()) wnd->close();
-                if (auto keyRel = ev->getIf<sf::Event::KeyReleased>()) {
-                    if (keyRel->code == sf::Keyboard::Key::M) inEditMode = !inEditMode;
-                }
-            }
-
-            // Example text send on key tap
-            static bool keydown = false;
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::I)) keydown = true;
-            else if (keydown) { keydown = false; sendMessageMsg(TEXT::POOPSIE); }
-
-            elapsed = timer.restart().asSeconds();
-
-            Update(elapsed);
-            Render();
-        }
     }
+
+    
 
     bool Update(float fElapsedTime)
     {
@@ -507,22 +514,22 @@ public:
 
                         auto feet = sf::Vector2i{ (int)playerPos.x, (int)playerPos.y};
                         uint32_t* mapDD = mapData;
-                        NeighborhoodTiles nt = makeNeighborhoodPacket(nPlayerID, 0, tLayer,  feet.x, feet.y, &mapDD);
-                        cnet::message<Msg> m;
-                        m.header.id = Msg::Client_NeighborhoodTiles;
-                        m << nt; // implement << / >> for NeighborhoodTiles (trivial pack of POD)
-                        Send(m);
+                        //NeighborhoodTiles nt = makeNeighborhoodPacket(nPlayerID, 0, tLayer,  feet.x, feet.y, &mapDD);
+                        //cnet::message<Msg> m;
+                        //m.header.id = Msg::Client_NeighborhoodTiles;
+                        //m << nt; // implement << / >> for NeighborhoodTiles (trivial pack of POD)
+                        //Send(m);
                     }
                 }
         
             }
-            if (isAttacking)
+           /* if (isAttacking)
             {
                 if (startingAttack)
                 {
                     startingAttack = false;
                 }
-            }
+            }*/
             
         }
         return true;

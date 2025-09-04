@@ -138,6 +138,7 @@
     <ClCompile Include="src\CollisionSystem\IsoTileCollider.cpp" />
     <ClCompile Include="src\CollisionSystem\Physics.cpp" />
     <ClCompile Include="src\CollisionSystem\util.cpp" />
+    <ClCompile Include="src\core\GameServer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="assets\font\Crusty.ttf" />
@@ -154,6 +155,7 @@
     <ClInclude Include="src\CollisionSystem\IsoTileCollider.h" />
     <ClInclude Include="src\CollisionSystem\Physics.h" />
     <ClInclude Include="src\CollisionSystem\util.h" />
+    <ClInclude Include="src\core\GameServer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
