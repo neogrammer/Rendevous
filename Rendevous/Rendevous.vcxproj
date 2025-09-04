@@ -132,7 +132,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="SERVER.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="src\CollisionSystem\BoxCollider.cpp" />
     <ClCompile Include="src\CollisionSystem\Collider.cpp" />
     <ClCompile Include="src\CollisionSystem\IsoTileCollider.cpp" />
