@@ -95,18 +95,23 @@ void Client::initAssets()
         int numy = i / numCols;
         auto& t = tileset.emplace_back(tilesetTex);
         t.setPosition({ 0.f,0.f });
-        t.setTextureRect({ {numx * (int)TW, numy * (int)TH}, {(int)TW,(int)TH} });
+        t.setTextureRect({ {numx * (int)hlp::tileSize.first, numy * (int)hlp::tileSize.second}, {(int)hlp::tileSize.first,(int)hlp::tileSize.second} });
     }
 
     const int mapCols = 40, mapRows = 45, total = mapCols * mapRows;
     tilemap.reserve(total);
-    for (int i = 0; i < total; i++) {
-        int numx = i % mapCols;
-        int numy = i / mapCols;
-        auto& t = tilemap.emplace_back(tilesetTex);
-        t.setPosition({ (float)numx * TW, (float)numy * TH });
-        t.setTextureRect({ sf::Vector2i{tileset[mapData[i]].getTextureRect().position},
-                           sf::Vector2i{tileset[mapData[i]].getTextureRect().size} });
+    for (int y = 0; y < mapRows; y++)
+    {
+        for (int x = 0; x < mapCols; x++)
+        {
+            int pitch = mapCols;
+            int num = y * pitch + x;
+            if (num >= 1800) break;
+            auto& t = tilemap.emplace_back(tilesetTex);
+            t.setPosition({ (float)x * (float)hlp::tileSize.first, (float)y * (float)hlp::tileSize.second });
+            t.setTextureRect({ sf::Vector2i{tileset[mapData[num]].getTextureRect().position},
+                               sf::Vector2i{tileset[mapData[num]].getTextureRect().size} });
+        }
     }
 }
 bool Client::loadMap(uint32_t** data, int numElems, const std::string& filename)
@@ -377,7 +382,7 @@ bool Client::Update(float fElapsedTime)
                 {
 
                     TileLayer tLayer = {};
-                    tLayer.tileSize = (uint32_t)TW;
+                    tLayer.tileSize = (int)hlp::tileSize.first;
                     tLayer.width = 40;
                     tLayer.height = 45;
                     tLayer.data = mapData;
@@ -408,9 +413,9 @@ void Client::Render()
     // Draw tilemap as isometric sprites (unchanged)
     for (int i = 0; i < (int)tilemap.size(); i++)
     {
-        auto p = sf::Vector2f(tilemap[i].getPosition().x, tilemap[i].getPosition().y);
+        sf::Vector2f p = hlp::ToScreenIso(tilemap[i].getPosition());
         sf::Sprite isoSprite{ tilesetTex };
-        isoSprite.setPosition({ (float)p.x,(float)p.y });
+        isoSprite.setPosition(p);
         isoSprite.setTextureRect(tilemap[i].getTextureRect());
         wnd->draw(isoSprite);
     }
@@ -495,7 +500,7 @@ sf::Texture& Client::getPlayerTex(AnimID id_) { return playerTexArr[(int)id_]; }
 float Client::getPlayerZHeight(uint32_t playerID)
 {
     sf::Vector2f ppos = { drawObjects[playerID].xpos,drawObjects[playerID].ypos };
-    sf::Vector2f ipos = { (ppos.x - ppos.y) * ((float)TW / 2.f) ,  (ppos.x + ppos.y) * ((float)TH / 4.f) };
+    sf::Vector2f ipos = { (ppos.x - ppos.y) * ((float)hlp::tileSize.first / 2.f) ,  (ppos.x + ppos.y) * ((float)hlp::tileSize.first / 4.f) };
 
     return ipos.y + playerZHeightOffset;
 }

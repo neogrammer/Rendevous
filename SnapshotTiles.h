@@ -38,6 +38,8 @@ struct PlayerCollisionTiles
     uint32_t pitch = 0;
 };
 
+
+
 #endif // SNAPSHOTTILES_H__
 
 

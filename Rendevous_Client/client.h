@@ -42,8 +42,6 @@ class Client : public cnet::client_interface<Msg>
 
 public:
     sf::Vector2i mpos{0,0};
-    const unsigned TW = 128;
-    const unsigned TH = 128;
     const unsigned SCRW = 1024;
     const unsigned SCRH = 576;
     typedef std::array<std::vector<sf::IntRect>, 8> AnimSheet;
