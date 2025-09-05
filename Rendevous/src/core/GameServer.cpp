@@ -119,7 +119,7 @@ GameServer::GameServer(uint16_t nPort) : cnet::server_interface<Msg>(nPort) {
             PlayerIO io{};
             msg >> io;
 
-            ioU = io.u; ioD = io.d; ioL = io.l; ioR = io.r; ioSpace = io.space;
+          
 
             auto& pio = playerIOMap[client->GetID()];
             pio.d = io.d; // overwrite this frame's input
@@ -155,6 +155,8 @@ GameServer::GameServer(uint16_t nPort) : cnet::server_interface<Msg>(nPort) {
 
     bool GameServer::loadMap(uint32_t** data, int numElems, const std::string& filename)
     {
+
+
         std::string path{ "assets/areas/" };
         std::string ext{ ".map" };
 
@@ -225,7 +227,7 @@ GameServer::GameServer(uint16_t nPort) : cnet::server_interface<Msg>(nPort) {
 
         for (auto& kv : playerDataMap)
         {
-            handleInput(playerIOMap[kv.first], kv.second);
+            handleInput(playerIOMap[kv.first], playerDataMap[kv.first]);
             
             //if (playerCollideTiles.find(kv.first) != playerCollideTiles.end() && playerDataMap.find(kv.first) != playerDataMap.end())
             //{
@@ -314,7 +316,7 @@ GameServer::GameServer(uint16_t nPort) : cnet::server_interface<Msg>(nPort) {
 
 
 
-                animate(playerIOMap[kv.first], kv.second, dt);
+                animate(playerIOMap[kv.first], playerDataMap[kv.first], dt);
 
 
                 // player has collided with map tiles. right now, the water tiles, safe to send the snapshot over to the client
@@ -333,10 +335,11 @@ GameServer::GameServer(uint16_t nPort) : cnet::server_interface<Msg>(nPort) {
         vec.reserve(playerDataMap.size());
         for (const auto& kv : playerDataMap)
         {
-            const auto& p = kv.second;
+            const auto& p = playerDataMap[kv.first];
             PlayerDrawData d{};
             d.id = kv.first;
-            d.xpos = p.xpos; d.ypos = p.ypos;
+            d.xpos = p.xpos;
+            d.ypos = p.ypos;
 
             // clamp to valid ranges to be safe
             auto clampAnim = [](AnimID a) {
@@ -440,10 +443,8 @@ GameServer::GameServer(uint16_t nPort) : cnet::server_interface<Msg>(nPort) {
             text.setFillColor(sf::Color::Red);
             text.setOutlineColor(sf::Color::White);
             text.setOutlineThickness(2.f);
-            std::string str = std::to_string(this->ioD) + " " + std::to_string(this->ioL) + " " +
-                std::to_string(this->ioU) + " " + std::to_string(this->ioR) + " " + std::to_string(this->ioSpace);
-            text.setString(this->myMsg);
-            window.draw(text);
+           
+           // window.draw(text);
         }
         // draw each roster entry without inserting new ones
         float y = bottomY;
@@ -468,12 +469,50 @@ GameServer::GameServer(uint16_t nPort) : cnet::server_interface<Msg>(nPort) {
             constexpr float SPEED = 500.f;
             auto& io = pIO;
             float sx = 0.f, sy = 0.f;
-            if (io.u) sy -= 1.f;   // Up
-            if (io.d) sy += 1.f;   // Down
-            if (io.l) sx -= 1.f;   // Left
-            if (io.r) sx += 1.f;   // Right
-            float vx = 0.5f * sx + 0.5f * sy;
-            float vy = -0.5f * sx + 0.5f * sy;
+            if (io.u && io.r)
+            {
+                sy -= 1.f;
+            }
+            else if (io.d && io.l)
+            {
+                sy += 1.f;   // Down
+            }
+            else if (io.l && io.u)
+            {
+                sx -= 1.f;
+
+            }
+            else if (io.d && io.r)
+            {
+                sx += 1.f;
+            }
+            else
+            {
+                if (io.u)
+                {
+                    sy -= 1.f;
+                    sx -= 1.f;
+
+                }
+                else if (io.r)
+                {
+                    sy -= 1.f;
+                    sx += 1.f;
+
+                }
+                else if (io.l)
+                {
+                    sy += 1.f;
+                    sx -= 1.f;
+                }
+                else if (io.d)
+                {
+                    sy += 1.f;
+                    sx += 1.f;
+                }
+            }
+            float vx = (sx - sy) * ((float)hlp::tileSize.first / 2.f);
+            float vy = (sx + sy) * ((float)hlp::tileSize.second / 2.f);
             const float len = std::sqrt(vx * vx + vy * vy);
             if (len > 0.0001f) { vx /= len; vy /= len; }
             pData.xvel = vx * SPEED;
@@ -622,6 +661,21 @@ GameServer::GameServer(uint16_t nPort) : cnet::server_interface<Msg>(nPort) {
         {
            // std::cout << "Was not able to load the map tiles data into the array properly" << std::endl;
             return false;
+        }
+
+        const int mapCols = 40, mapRows = 45, total = mapCols * mapRows;
+        tilemap.reserve(total);
+        for (int y = 0; y < mapRows; y++)
+        {
+            for (int x = 0; x < mapCols; x++)
+            {
+                int pitch = mapCols;
+                int num = y * pitch + x;
+                if (num >= 1800) break;
+                auto& t = tilemap.emplace_back(dummyTex);
+                t.setPosition({ (float)x * (float)hlp::tileSize.first, (float)y * (float)hlp::tileSize.second });
+                t.setTextureRect({ { 0,0 }, {1,1} });
+            }
         }
 
         return true;

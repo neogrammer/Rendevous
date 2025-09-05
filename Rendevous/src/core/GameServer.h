@@ -48,6 +48,7 @@ public:
     sf::Texture dummyTex{ "assets/textures/isometric_demo.png" };
     float zHeightOffset = 156.f;
     std::unordered_map<uint32_t, PlayerIO>   playerIOMap;
+    std::vector<sf::Sprite> tilemap;
     std::vector<int> currTSetDetails = {
         1, 1, 0, 0, 0, 2, 3, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -67,7 +68,6 @@ public:
 public:
 
     // Debug
-    uint32_t ioU{}, ioD{}, ioL{}, ioR{}, ioSpace{};
     // Text
     std::map<uint32_t, std::vector<TEXT>> m_messagesToDisplay;
     std::unordered_map<TEXT, std::string> m_msgStrLUT = {
