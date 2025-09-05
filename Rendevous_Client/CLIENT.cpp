@@ -1,5 +1,5 @@
 #include "client.h"
-
+#include "../SolutionHelper.cpp"
 
 void Client::run()
 {
@@ -13,7 +13,7 @@ void Client::run()
         Render();
     }
 }
-Client::Client() { wnd = new sf::RenderWindow{}; }
+Client::Client() : cellShp{ { (float)hlp::tileSize.first, (float)hlp::tileSize.second } } { wnd = new sf::RenderWindow{}; }
 Client::~Client()
 {
 }
@@ -183,7 +183,7 @@ void Client::handleWindowEvents(sf::RenderWindow& wnd_)
             if (keyRel->code == sf::Keyboard::Key::M) inEditMode = !inEditMode;
         }
     }
-
+    mpos = sf::Mouse::getPosition(wnd_);
 }
 void Client::processInput()
 {
@@ -194,6 +194,22 @@ void Client::processInput()
 }
 bool Client::Update(float fElapsedTime)
 {
+
+    std::pair<uint32_t, uint32_t> cellpos = { (uint32_t)((float)mpos.x / hlp::tileSize.first), (uint32_t)((float)mpos.y / hlp::tileSize.second) };
+    std::pair<int32_t, int32_t> offset = { (int32_t)mpos.x % (int32_t)hlp::tileSize.first,(int32_t)mpos.y % (int32_t)hlp::tileSize.second };
+
+    // clamp cellShpX and Y so that it does not refer to an imaginary cell wrt world space
+    cellShpX = (uint32_t)std::min(std::max((int)cellpos.first, 0), (int)hlp::worldSize.first - 1);
+    cellShpY = (uint32_t)std::min(std::max((int)cellpos.second, 0), (int)hlp::worldSize.second -1);
+    cellOffsetX = (uint32_t)std::min(std::max((int)offset.first, 0), (int)hlp::tileSize.first - 1);
+    cellOffsetY = (uint32_t)std::min(std::max((int)offset.first, 0), (int)hlp::tileSize.second - 1);
+
+       /* auto mapIso2 = [&](const sf::Vector2f& pos) {
+        float xIso = ((pos.x / (float)TW) - (pos.y / (float)TH)) * 0.5f * TW;
+        float yIso = ((pos.x / (float)TW) + (pos.y / (float)TH)) * 0.5f * (TH / ((TW == TH) ? 2.f : 1.f));
+        return sf::Vector2f{ xIso, yIso };
+        };*/
+
     // Network receive
     if (IsConnected())
     {
@@ -333,6 +349,30 @@ bool Client::Update(float fElapsedTime)
                 this->myIO = myIO;
                 Send(ioMsg);
 
+              /*  PlayerCollisionTiles colTiles;
+                colTiles.playerId = nPlayerID;
+                colTiles.mapTileCount = 1800;
+                colTiles.pitch = 40;
+                colTiles.tileSize = hlp::tileSize.first;
+                auto isoppos = hlp::ToScreen((float)mpos.x, (float)mpos.y);
+                float tileSX = (((float)isoppos.first * (float)hlp::tileSize.first) - 10.f);
+                float tileSY = (((float)isoppos.second * (float)hlp::tileSize.second) - 10.f);
+                float tileEX = (tileSX + 299.f + 20.f);
+                float tileEY = (tileSY + 240.f + 20.f);
+                colTiles.startTileXIdx = (int32_t)std::max((int32_t)(tileSX / (float)hlp::tileSize.first), 0i32);
+                colTiles.endTileXIdx = (int32_t)std::min((int32_t)(tileEX / (int32_t)hlp::tileSize.first), (int32_t)hlp::worldSize.first - 1i32);
+                colTiles.startTileYIdx = (int32_t)std::max((int32_t)(tileSY / (float)hlp::tileSize.second), 0i32);
+                colTiles.endTileYIdx = (int32_t)std::min((int32_t)(tileEY / (int32_t)hlp::tileSize.second), (int32_t)hlp::worldSize.second - 1i32);
+                
+
+                std::cout << "startX: " << colTiles.startTileXIdx << ", endX: " << colTiles.endTileXIdx << " .. startY: " << colTiles.startTileYIdx << ", endY: " << colTiles.endTileYIdx << "\n";
+
+
+                cnet::message<Msg> collideTilesMsg;
+                collideTilesMsg.header.id = Msg::Client_CollideTiles;
+                collideTilesMsg << colTiles;
+                Send(collideTilesMsg);*/
+
                 if (moving)
                 {
 
@@ -356,16 +396,11 @@ bool Client::Update(float fElapsedTime)
 }
 void Client::Render()
 {
-    auto mapIso = [&](const sf::Vector2f& pos) {
-        float xIso = ((pos.x / (float)TW) - (pos.y / (float)TH)) * 0.5f * TW;
-        float yIso = ((pos.x / (float)TW) + (pos.y / (float)TH)) * 0.5f * (TH / ((TW == TH) ? 2.f : 1.f));
-        return sf::Vector2f{ xIso, yIso };
-        };
-
+    
     wnd->clear(sf::Color::Blue);
 
     // Camera centers on local player (isometric mapped)
-    sf::Vector2f cam = mapIso(playerPos);
+    auto cam = sf::Vector2f(playerPos.x, playerPos.y);
     auto vw = wnd->getView();
     vw.setCenter({ cam.x + playerWidth * 0.5f, cam.y + playerHeight * 0.5f });
     wnd->setView(vw);
@@ -373,9 +408,9 @@ void Client::Render()
     // Draw tilemap as isometric sprites (unchanged)
     for (int i = 0; i < (int)tilemap.size(); i++)
     {
-        auto p = mapIso(tilemap[i].getPosition());
+        auto p = sf::Vector2f(tilemap[i].getPosition().x, tilemap[i].getPosition().y);
         sf::Sprite isoSprite{ tilesetTex };
-        isoSprite.setPosition(p);
+        isoSprite.setPosition({ (float)p.x,(float)p.y });
         isoSprite.setTextureRect(tilemap[i].getTextureRect());
         wnd->draw(isoSprite);
     }
@@ -415,6 +450,7 @@ void Client::Render()
             playerAnimID = (((AnimID)animIndex(d.animID) == (AnimID)(uint32_t)1) ? AnimID::Run : ((d.animID == (AnimID)(uint32_t)2) ? AnimID::Attack : AnimID::Idle));
             playerDir = static_cast<Dir>(dirIndex(d.dir));
             playerAnimFrameIdx = frames.empty() ? 0u : (d.frameIndex % static_cast<uint32_t>(playerAnimFrames[animIndex(playerAnimID)][dirIndex(playerDir)].size()));
+            //std::cout << "Im at " << mapIso(playerPos).x << ", " << mapIso(playerPos).y << std::endl;
         }
 
         const auto idx = frames.empty() ? 0u : (d.frameIndex % static_cast<uint32_t>(frames.size()));
@@ -423,7 +459,7 @@ void Client::Render()
 
         // If your world is “logical” coords, iso-map them; otherwise just use d.xpos/d.ypos
         sf::Vector2f pos{ d.xpos, d.ypos };
-        spr.setPosition(mapIso(pos));
+        spr.setPosition(pos);
         spr.setTextureRect(frames[idx]);
 
         wnd->draw(spr);
@@ -437,11 +473,21 @@ void Client::Render()
         txt.setFillColor(sf::Color::White);
         txt.setOutlineColor(sf::Color::Black);
         txt.setOutlineThickness(1);
-        sf::Vector2f camP = sf::Vector2f(mapIso({ p.second.xpos, p.second.ypos }));
+        sf::Vector2f camP = { (float)hlp::ToScreen((float)p.second.xpos,(float)p.second.ypos).first, (float)hlp::ToScreen((float)p.second.xpos,(float)p.second.ypos).second };
         txt.setPosition({ camP.x + 110.f, camP.y - 5.f });
         txt.setString(std::to_string(p.first)); // add if wanted
         wnd->draw(txt);
     }
+
+    cellShp.setSize({ hlp::tileSize.first, hlp::tileSize.second });
+    cellShp.setPosition({ cellShpX * hlp::tileSize.first, cellShpY * hlp::tileSize.second });
+    cellShp.setFillColor(sf::Color::Transparent);
+    cellShp.setOutlineColor(sf::Color::Red);
+    cellShp.setOutlineThickness(1);
+    
+    wnd->draw(cellShp);
+
+
     wnd->display();
 }
 

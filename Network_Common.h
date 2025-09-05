@@ -170,6 +170,8 @@ enum class Msg : uint32_t
     Game_RemovePlayer,
     Client_NeighborhoodTiles,
 
+    Client_CollideTiles,
+
     // Client -> Server
     Client_IO
 };
@@ -271,6 +273,15 @@ inline cnet::message<Msg>& operator<<(cnet::message<Msg>& m, const NeighborhoodT
 inline cnet::message<Msg>& operator>>(cnet::message<Msg>& m, NeighborhoodTiles& nt) {
     for (int i = 8; i >= 0; --i) m >> nt.tilesetIdx[static_cast<size_t>(i)];
     m >> nt.bottom >> nt.right >> nt.left >> nt.top >> nt.centerTy >> nt.centerTx >> nt.seq >> nt.playerId;
+    return m;
+}
+
+inline cnet::message<Msg>& operator<<(cnet::message<Msg>& m, const PlayerCollisionTiles& nt) {
+    m << nt.playerId << nt.startTileXIdx << nt.endTileXIdx << nt.startTileYIdx << nt.endTileYIdx << nt.mapTileCount << nt.tileSize << nt.pitch;
+    return m;
+}
+inline cnet::message<Msg>& operator>>(cnet::message<Msg>& m, PlayerCollisionTiles& nt) {
+    m >> nt.pitch >> nt.tileSize >> nt.mapTileCount >> nt.endTileYIdx >> nt.startTileYIdx >> nt.endTileXIdx >> nt.startTileXIdx >> nt.playerId;
     return m;
 }
 

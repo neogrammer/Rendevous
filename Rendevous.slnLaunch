@@ -9,7 +9,7 @@
       },
       {
         "Path": "Rendevous_Client\\Rendevous_Client.vcxproj",
-        "Action": "StartWithoutDebugging",
+        "Action": "Start",
         "DebugTarget": "Local Windows Debugger"
       }
     ]

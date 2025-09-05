@@ -16,12 +16,16 @@
 #include "../SnapshotTiles.h"
 #include "./src/CollisionSystem/Colliders.h"
 #include "./src/CollisionSystem/util.h"
-
+#include "../SolutionHelpers.h"
 
 #include "./src/CollisionSystem/Physics.h"
 
+
+
+
 class GameServer : public cnet::server_interface<Msg>
 {
+
 
 public:
     sf::Vector2f getPlayerColliderPos(sf::Sprite& player_);
@@ -31,11 +35,15 @@ public:
     void renderServerDisplay(sf::RenderWindow& window);
     void handleInput(PlayerIO& pIO, PlayerData& pData);
     void animate(PlayerIO& pIO, PlayerData& pData, float dt);
+    bool initAssets(); 
+    bool loadMap(uint32_t** data, int numElems, const std::string& filename);
 public:
     bool hasTilesToCheck{ false };
 public:
-    std::string myMsg{ "Not in collision" };
+    std::string myMsg{ "" };
+    std::vector<std::string> myStrings{};
     // Sim state
+    std::unordered_map<uint32_t, PlayerCollisionTiles> playerCollideTiles;
     std::unordered_map<uint32_t, PlayerData> playerDataMap;
     sf::Texture dummyTex{ "assets/textures/isometric_demo.png" };
     float zHeightOffset = 156.f;
@@ -53,13 +61,17 @@ public:
         0, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0
 
     };
+    uint32_t mapData[1800] = { /* (kept as your existing data) */ };
+    int currTSetCols{0};
+    int currTSetRows{ 0 };
 public:
+
     // Debug
     uint32_t ioU{}, ioD{}, ioL{}, ioR{}, ioSpace{};
     // Text
     std::map<uint32_t, std::vector<TEXT>> m_messagesToDisplay;
     std::unordered_map<TEXT, std::string> m_msgStrLUT = {
-        {TEXT::POOPSIE, "Poopsie Daisy"},
+        {TEXT::POOPSIE, ""},
     };
     std::unordered_map<uint32_t, sPlayerDescription> m_mapPlayerRoster;
     std::vector<uint32_t> m_vGarbageIDs;

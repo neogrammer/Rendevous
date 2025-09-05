@@ -26,6 +26,18 @@ struct NeighborhoodTiles {
     std::array<uint32_t, 9> tilesetIdx{}; // 3×3 row-major: TL..BR
 };
 
+struct PlayerCollisionTiles
+{
+    uint32_t playerId = 0;
+    int32_t startTileXIdx = -1;
+    int32_t endTileXIdx = -1;
+    int32_t startTileYIdx = -1;
+    int32_t endTileYIdx = -1;
+    uint32_t mapTileCount = 0;
+    uint32_t tileSize = 0;
+    uint32_t pitch = 0;
+};
+
 #endif // SNAPSHOTTILES_H__
 
 

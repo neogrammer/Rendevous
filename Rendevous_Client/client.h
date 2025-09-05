@@ -16,6 +16,9 @@
 #include <cstdint>
 #include "../SnapshotTiles.h"
 #include <../Macros.h>
+#include "../SolutionHelpers.h"
+
+
 
 constexpr int playerWidth = 299;
 constexpr int playerHeight = 240;
@@ -30,9 +33,15 @@ struct TileLayer
 
 class Client : public cnet::client_interface<Msg>
 {
+    sf::RectangleShape cellShp;
+    uint32_t cellShpX{};
+    uint32_t cellShpY{};
+    uint32_t cellOffsetX{};
+    uint32_t cellOffsetY{};
+
 
 public:
-
+    sf::Vector2i mpos{0,0};
     const unsigned TW = 128;
     const unsigned TH = 128;
     const unsigned SCRW = 1024;

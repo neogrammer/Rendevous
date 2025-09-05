@@ -6,7 +6,9 @@ int main(int argc, char* argv[])
     GameServer server(60000);
     server.Start();
 
-    sf::RenderWindow window(sf::VideoMode({ 600, 400 }), "GameServer!");
+    server.initAssets();
+
+    sf::RenderWindow window(sf::VideoMode({ 800, 600 }), "GameServer!");
     if (!window.isOpen()) return 420;
     window.setPosition(sf::Vector2i(1200, 200));
 
