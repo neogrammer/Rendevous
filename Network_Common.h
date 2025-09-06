@@ -155,7 +155,7 @@ enum class Msg : uint32_t
 
     // Server -> Client
     Server_PlayerDrawSnapshot,   // batched draw data for this frame
-
+    Server_TileCollided,
     // Text chat (kept)
     Client_SendText,
 
@@ -201,6 +201,14 @@ struct sPlayerDescription
 
     std::pair<float, float> vPos{ 200.f,200.f };
     std::pair<float, float> vVel{ 0.f,0.f };
+};
+
+struct TileCollide
+{
+    uint32_t id = 0;
+    uint32_t isColliding = 0;
+    int32_t xpos = 0;
+    int32_t ypos = 0;
 };
 
 struct PlayerIO
@@ -264,6 +272,17 @@ static inline TEXT    to_text(uint32_t v) { return static_cast<TEXT>(v); }
 //    v.r = (b & 0x08) != 0;
 //    return msg;
 //}
+
+inline cnet::message<Msg>& operator<<(cnet::message<Msg>& m, const TileCollide& nt) {
+    m << nt.id << nt.isColliding << nt.xpos << nt.ypos;
+  
+    return m;
+}
+inline cnet::message<Msg>& operator>>(cnet::message<Msg>& m, TileCollide& nt) {
+    
+    m >> nt.ypos >> nt.xpos >> nt.isColliding >> nt.id;
+    return m;
+}
 
 inline cnet::message<Msg>& operator<<(cnet::message<Msg>& m, const NeighborhoodTiles& nt) {
     m << nt.playerId << nt.seq << nt.centerTx << nt.centerTy << nt.top << nt.left << nt.right << nt.bottom;

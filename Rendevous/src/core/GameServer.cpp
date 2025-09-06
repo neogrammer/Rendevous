@@ -307,18 +307,7 @@ GameServer::GameServer(uint16_t nPort) : cnet::server_interface<Msg>(nPort) {
             //        }
             //    }
 
-            //    // if no collision took place then the velocity was not applied to the position yet, and we can just do that directly now, in this case
-              //  if (!collided)
-               // {
-                    playerDataMap[kv.first].xpos += playerDataMap[kv.first].xvel * dt;
-                    playerDataMap[kv.first].ypos += playerDataMap[kv.first].yvel * dt;
-               // }
-
-
-
-                animate(playerIOMap[kv.first], playerDataMap[kv.first], dt);
-
-
+         
                 // player has collided with map tiles. right now, the water tiles, safe to send the snapshot over to the client
                
 
@@ -397,15 +386,85 @@ GameServer::GameServer(uint16_t nPort) : cnet::server_interface<Msg>(nPort) {
         static float fps60 = 1.f / 60.f;
         float dt_ = clock.restart().asSeconds();
         accumulator += dt_;
+        repaint = false;
         while (accumulator >= fps60)
         {
             this->Simulate(fps60);
             accumulator -= fps60;
+            repaint = true;
+            dtHang = fps60;
         }
         return true;
     }
     void GameServer::renderServerDisplay(sf::RenderWindow& window)
     {
+        if (repaint)
+        {
+            for (auto& player : playerDataMap)
+            {
+
+                bool collided = false;
+                for (int i = 0; i < hlp::worldSize.first * hlp::worldSize.second; i++)
+                {
+                    if (currTSetDetails[mapData[i]] != 1)
+                    {
+                        continue;
+                    }
+                    auto temp = hlp::ScreenToWorld(tilemap[i].getPosition());
+                    if (tilemap[i].getPosition().x >= window.getView().getCenter().x - window.getSize().x / 2 && tilemap[i].getPosition().x < window.getView().getCenter().x + window.getSize().x / 2
+                        && tilemap[i].getPosition().y >= window.getView().getCenter().y - window.getSize().y / 2 && tilemap[i].getPosition().y < window.getView().getCenter().y + window.getSize().y / 2)
+                    {
+
+
+                        std::unique_ptr<Collider> tileCollider = std::make_unique<IsoTileCollider>(tilemap[i]);
+
+                        sf::Sprite feetSpr{ dummyTex };
+
+
+                        feetSpr.setPosition({ (float)playerDataMap[player.first].xpos + 124.f, (float)playerDataMap[player.first].ypos + 150.f });
+                        std::unique_ptr<Collider> playerCollider = std::make_unique<BoxCollider>(feetSpr, 50.f, 30.f);
+                        static sf::Vector2f prevPos{};
+                        if (Physics::DetectAndResolve(*playerCollider, *tileCollider))
+                        {
+
+                            collided = true;
+                            player.second.xpos = playerCollider->getSprite().getPosition().x - 124.f;
+                            player.second.ypos = playerCollider->getSprite().getPosition().y - 150.f;
+                           auto p = tileCollider->getSprite().getPosition().x;
+                           auto pp =  tileCollider->getSprite().getPosition().y;
+
+                            cnet::message<Msg> msg;
+                            msg.header.id = Msg::Server_TileCollided;
+
+                            TileCollide tc{};
+                            tc.id = player.first;
+                            tc.isColliding = 1;
+                            tc.xpos = (int32_t)p;
+                            tc.ypos = (int32_t)pp;
+
+                            msg << tc;
+
+                            MessageAllClients(msg);
+
+                        }
+
+                    }
+
+                }
+                //    // if no collision took place then the velocity was not applied to the position yet, and we can just do that directly now, in this case
+                if (!collided)
+                {
+                    player.second.xpos += player.second.xvel * dtHang;
+                    player.second.ypos += player.second.yvel * dtHang;
+                }
+
+
+
+
+                animate(playerIOMap[player.first], playerDataMap[player.first], dtHang);
+
+            }
+        }
         // Debug draw
         window.clear();
         static sf::Font crustyFont{ "assets/font/font2.ttf" };
@@ -673,7 +732,7 @@ GameServer::GameServer(uint16_t nPort) : cnet::server_interface<Msg>(nPort) {
                 int num = y * pitch + x;
                 if (num >= 1800) break;
                 auto& t = tilemap.emplace_back(dummyTex);
-                t.setPosition({ (float)x * (float)hlp::tileSize.first, (float)y * (float)hlp::tileSize.second });
+                t.setPosition(hlp::ToScreenIso({ (float)x * (float)hlp::tileSize.first, (float)y * (float)hlp::tileSize.second }));
                 t.setTextureRect({ { 0,0 }, {1,1} });
             }
         }

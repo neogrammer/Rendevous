@@ -53,6 +53,9 @@ public:
     void run(); 
 
 private:
+    std::unordered_map<uint32_t, sf::Vector2f> tileCollidePos{};
+    std::unordered_map < uint32_t, bool> tileCollided{};
+
     void handleWindowEvents(sf::RenderWindow& wnd_);
     void processInput();
     bool loadMap(uint32_t** data, int numElems, const std::string& filename);

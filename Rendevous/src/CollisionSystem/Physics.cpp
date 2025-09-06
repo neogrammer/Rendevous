@@ -40,8 +40,8 @@ bool Physics::DetectAndResolve(Collider& r1, Collider& r2)
                 if (t1 >= 0.0f && t1 < 1.0f && t2 >= 0.0f && t2 < 1.0f)
                 {
                     collided = true;
-                    displacement.x += (1.0f - t1) * (line_r1e.x - line_r1s.x);
-                    displacement.y += (1.0f - t1) * (line_r1e.y - line_r1s.y);
+                    displacement.x += (1.0f - (t1-0.001f)) * (line_r1e.x - line_r1s.x);
+                    displacement.y += (1.0f - (t1-0.001f)) * (line_r1e.y - line_r1s.y);
                 }
             }
 

@@ -300,6 +300,14 @@ bool Client::Update(float fElapsedTime)
                 }
             }
             break;
+            case Msg::Server_TileCollided:
+            {
+                TileCollide tc;
+                msg >> tc;
+                tileCollidePos.insert_or_assign(tc.id, sf::Vector2f{ (float)tc.xpos,(float)tc.ypos });
+                tileCollided.insert_or_assign(tc.id, (tc.isColliding == 1u) ? true : false);
+            }
+            break;
             default:
             {}
             break;
@@ -408,10 +416,10 @@ void Client::Render()
     wnd->clear(sf::Color::Blue);
 
     // Camera centers on local player (isometric mapped)
-   // auto cam = sf::Vector2f(drawObjects[nPlayerID].xpos + playerWidth * 0.5f, drawObjects[nPlayerID].ypos + playerHeight * 0.5f);
-   // auto vw = wnd->getView();
-   // vw.setCenter(cam);
-    //wnd->setView(vw);
+    auto cam = sf::Vector2f(drawObjects[nPlayerID].xpos + playerWidth * 0.5f, drawObjects[nPlayerID].ypos + playerHeight * 0.5f);
+    auto vw = wnd->getView();
+    vw.setCenter(cam);
+    wnd->setView(vw);
 
     // Draw tilemap as isometric sprites (unchanged)
     for (int i = 0; i < (int)tilemap.size(); i++)
@@ -419,7 +427,7 @@ void Client::Render()
         sf::Vector2f p = hlp::ToScreenIso(tilemap[i].getPosition());
         sf::Sprite isoSprite{ tilesetTex };
         isoSprite.setPosition(p);
-        isoSprite.setTextureRect(tilemap[i].getTextureRect());
+        isoSprite.setTextureRect({ {tilemap[i].getTextureRect().position}, {(int)hlp::tileSize.first, (int)hlp::tileSize.second * 2} });
         wnd->draw(isoSprite);
     }
 
@@ -490,6 +498,9 @@ void Client::Render()
         wnd->draw(selected);
     }
 
+    
+  
+
     std::vector<std::pair<uint32_t, std::pair<uint32_t, PlayerDrawData>>> sortme;
     sortme.clear();
     sortme.reserve(drawObjects.size());
@@ -520,9 +531,19 @@ void Client::Render()
 
         const auto& frames = playerAnimFrames[ai][di];
         if (frames.empty()) continue;
-
+   
         sf::Vector2f pos{ d.xpos, d.ypos };
-        //if (d.id == nPlayerID) {
+        if (d.id == nPlayerID) 
+        {
+            if (tileCollided[d.id])
+            {
+                sf::RectangleShape tmp({ (float)hlp::tileSize.first, (float)hlp::tileSize.second });
+                tmp.setPosition(tileCollidePos[d.id]);
+                tmp.setFillColor(sf::Color::Red);
+               // wnd->draw(tmp);
+            }
+        
+        }
         //    playerPos = { d.xpos,d.ypos };
         //    sf::Vector2i pSpot = { (int)playerPos.x, (int)playerPos.y };
         //    std::cout << "\n" << std::to_string(pSpot.x) << ", " << std::to_string(pSpot.y) << std::endl;
@@ -544,7 +565,11 @@ void Client::Render()
         spr.setTextureRect(frames[idx]);
 
         wnd->draw(spr);
+
+
     }
+
+
 
     for (auto& p : drawObjects)
     {
@@ -561,10 +586,14 @@ void Client::Render()
         wnd->draw(txt);
     }
 
-
+    
+    sf::View vwL8er = wnd->getDefaultView();
+    sf::View prevView = wnd->getView();
+    wnd->setView(vwL8er);
 
     displayText(*wnd, mpos, cell, selectedWorld, offset);
 
+    wnd->setView(prevView);
 
 
     wnd->display();

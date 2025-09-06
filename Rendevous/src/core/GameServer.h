@@ -26,6 +26,11 @@
 class GameServer : public cnet::server_interface<Msg>
 {
 
+    float dtHang{ 0 };
+    bool repaint{ false };
+    uint32_t collidedWithTile{ 0 };
+    int32_t collisionTilePosX{ 0 };
+    int32_t collisionTilePosY{ 0 };
 
 public:
     sf::Vector2f getPlayerColliderPos(sf::Sprite& player_);
