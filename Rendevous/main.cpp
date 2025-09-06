@@ -8,9 +8,9 @@ int main(int argc, char* argv[])
 
     server.initAssets();
 
-    sf::RenderWindow window(sf::VideoMode({ 800, 600 }), "GameServer!");
+    sf::RenderWindow window(sf::VideoMode({ 1600, 900 }), "GameServer!");
     if (!window.isOpen()) return 420;
-    window.setPosition(sf::Vector2i(1200, 200));
+    window.setPosition(sf::Vector2i(1800, 500));
 
     // Hide console window
     HWND hWnd = GetConsoleWindow();

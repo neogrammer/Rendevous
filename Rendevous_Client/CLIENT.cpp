@@ -113,6 +113,8 @@ void Client::initAssets()
                                sf::Vector2i{tileset[mapData[num]].getTextureRect().size} });
         }
     }
+
+    selected.setTextureRect({ {4 * (int)hlp::tileSize.first, 9 * ((int)hlp::tileSize.second * 2)},{(int)hlp::tileSize.first,(int)hlp::tileSize.second}});
 }
 bool Client::loadMap(uint32_t** data, int numElems, const std::string& filename)
 {
@@ -188,7 +190,7 @@ void Client::handleWindowEvents(sf::RenderWindow& wnd_)
             if (keyRel->code == sf::Keyboard::Key::M) inEditMode = !inEditMode;
         }
     }
-    mpos = sf::Mouse::getPosition(wnd_);
+    mpos = wnd_.mapPixelToCoords(sf::Mouse::getPosition(wnd_));
 }
 void Client::processInput()
 {
@@ -199,6 +201,7 @@ void Client::processInput()
 }
 bool Client::Update(float fElapsedTime)
 {
+
 
     std::pair<int32_t, int32_t> cellpos = { (int32_t)((float)mpos.x / hlp::tileSize.first), (int32_t)((float)mpos.y / hlp::tileSize.second) };
     std::pair<int32_t, int32_t> offset = { (int32_t)mpos.x % (int32_t)hlp::tileSize.first,(int32_t)mpos.y % (int32_t)hlp::tileSize.second };
@@ -401,14 +404,14 @@ bool Client::Update(float fElapsedTime)
 }
 void Client::Render()
 {
-    
+
     wnd->clear(sf::Color::Blue);
 
     // Camera centers on local player (isometric mapped)
-    auto cam = sf::Vector2f(drawObjects[nPlayerID].xpos + playerWidth * 0.5f, drawObjects[nPlayerID].ypos + playerHeight * 0.5f);
-    auto vw = wnd->getView();
-    vw.setCenter(cam);
-    wnd->setView(vw);
+   // auto cam = sf::Vector2f(drawObjects[nPlayerID].xpos + playerWidth * 0.5f, drawObjects[nPlayerID].ypos + playerHeight * 0.5f);
+   // auto vw = wnd->getView();
+   // vw.setCenter(cam);
+    //wnd->setView(vw);
 
     // Draw tilemap as isometric sprites (unchanged)
     for (int i = 0; i < (int)tilemap.size(); i++)
@@ -420,18 +423,88 @@ void Client::Render()
         wnd->draw(isoSprite);
     }
 
+    sf::Vector2i cell = { (int)mpos.x / (int)hlp::tileSize.first, (int)mpos.y / (int)hlp::tileSize.second };
+    sf::Vector2i offset = { (int)mpos.x % (int)hlp::tileSize.first, (int)mpos.y % (int)hlp::tileSize.second };
+
+    sf::Vector2f selectedWorld =
+    {
+          ((float)cell.y - hlp::worldOrigin.second) + ((float)cell.x - hlp::worldOrigin.first),
+          ((float)cell.y - hlp::worldOrigin.second) - ((float)cell.x - hlp::worldOrigin.first)
+    };
+
+    float tw = (float)hlp::tileSize.first;
+    float th = (float)hlp::tileSize.second;
+
+    if (offset.x < (int)((tw / 2.f)) && offset.y < int((th / 2.f)))
+    {
+        // we are in F4 lines quadrant
+        if (((offset.x * -th) - (tw * offset.y) + ((th * tw) / 2)) > 0)
+        {
+            // we are outside diamond, sub 1 from x
+            selectedWorld.x -= 1.f;
+        }
+
+        
+    }
+    else if (offset.x > int((tw / 2.f)) && offset.y < int((th / 2.f)))
+    {
+        // we are in F1 lines quadrant
+        if (((offset.x * th) - (tw * offset.y) - ((th * tw) / 2)) > 0)
+        {
+            // we are outside diamond, sub 1 from y
+            selectedWorld.y -= 1.f;
+        }
+       
+    }
+    else if (offset.x < int((tw / 2.f)) && offset.y > int((th / 2.f)))
+    {
+       // we are in F3
+        if (((offset.x * th) - (tw * offset.y) + ((th * tw) / 2)) < 0)
+        {
+            // we are outside diamond add 1 to y
+            selectedWorld.y += 1.f;
+        }      
+    }
+    else if (offset.x > int((tw / 2.f)) && offset.y > int((th / 2.f)))
+    {
+        // we are in F2
+        if (((offset.x * -th) - (tw * offset.y) + (3.f/2.f)*th * tw) < 0)
+        {
+            // we are outside diamond, add 1 to x
+            selectedWorld.x += 1.f;
+        }        
+    }
+    
+
+
+    //cellShp.setSize({ (float)hlp::tileSize.first, (float)hlp::tileSize.second });
+    //sf::Vector2i cellSpacePos = sf::Vector2i{ (int)((mpos.x) / (float)hlp::tileSize.first), (int)(mpos.y / (float)hlp::tileSize.second) };
+    //cellShp.setPosition({ (float)cell.x * (float)hlp::tileSize.first, (float)cell.y * (float)hlp::tileSize.second });
+    //cellShp.setFillColor(sf::Color::Transparent);
+    //cellShp.setOutlineColor(sf::Color::Red);
+    //cellShp.setOutlineThickness(1);
+    //wnd->draw(cellShp);
+    if ((selectedWorld.x >= 0) && (selectedWorld.y >= 0) && (selectedWorld.x < hlp::worldSize.first) && (selectedWorld.y < hlp::worldSize.second))
+    {
+        selected.setPosition(hlp::ToScreenIso({ (float)selectedWorld.x * (float)hlp::tileSize.first, (float)selectedWorld.y * (float)hlp::tileSize.second }));
+        wnd->draw(selected);
+    }
+
     std::vector<std::pair<uint32_t, std::pair<uint32_t, PlayerDrawData>>> sortme;
     sortme.clear();
     sortme.reserve(drawObjects.size());
 
     for (auto& kv : drawObjects)
     {
-        sortme.emplace_back(std::pair{ (int)getPlayerZHeight(kv.first), std::pair{kv.first, drawObjects[kv.first]}});
+        sortme.emplace_back(std::pair{ (int)getPlayerZHeight(kv.first), std::pair{kv.first, drawObjects[kv.first]} });
     }
 
     sort(sortme.begin(), sortme.end(), [&](const std::pair<uint32_t, std::pair<uint32_t, PlayerDrawData>>& a, const std::pair<uint32_t, std::pair<uint32_t, PlayerDrawData>>& b)->bool {
         return (a.first < b.first);
         });
+
+
+
 
 
     for (int i = 0; i < sortme.size(); i++)
@@ -465,9 +538,9 @@ void Client::Render()
         sf::Sprite spr{ ((ai == animIndex(AnimID::Idle)) ? playerTexArr[0] : ((ai == animIndex(AnimID::Attack)) ? playerTexArr[2] : playerTexArr[1])) };
 
         // If your world is “logical” coords, iso-map them; otherwise just use d.xpos/d.ypos
-       
+
         spr.setPosition(pos);
-        
+
         spr.setTextureRect(frames[idx]);
 
         wnd->draw(spr);
@@ -488,17 +561,89 @@ void Client::Render()
         wnd->draw(txt);
     }
 
-    cellShp.setSize({ hlp::tileSize.first, hlp::tileSize.second });
-    auto cellpos = (sf::Vector2f)mpos;
-    cellShp.setPosition(cellpos);
-    cellShp.setFillColor(sf::Color::Transparent);
-    cellShp.setOutlineColor(sf::Color::Red);
-    cellShp.setOutlineThickness(1);
-    
-    wnd->draw(cellShp);
+
+
+    displayText(*wnd, mpos, cell, selectedWorld, offset);
+
 
 
     wnd->display();
+}
+
+void Client::displayText(sf::RenderWindow& wnd_,const sf::Vector2f& mouseStr_,const sf::Vector2i& cellStr_, const sf::Vector2f& selectedStr_, const sf::Vector2i offsetStr_)
+{
+    sf::Text mouseTxt{ font1 };
+    sf::Text cellTxt{ font1 };
+    sf::Text selectedTxt{ font1 };
+    sf::Text offsetTxt{ font1 };
+
+
+    mouseTxt.setFillColor(sf::Color::White);
+    cellTxt.setFillColor(sf::Color::White);
+    selectedTxt.setFillColor(sf::Color::White);
+    offsetTxt.setFillColor(sf::Color::White);
+
+    mouseTxt.setCharacterSize(22u);
+    cellTxt.setCharacterSize(22u);
+    selectedTxt.setCharacterSize(22u);
+    offsetTxt.setCharacterSize(22u);
+
+    mouseTxt.setOutlineColor(sf::Color::Black);
+    cellTxt.setOutlineColor(sf::Color::Black);
+    selectedTxt.setOutlineColor(sf::Color::Black);
+    offsetTxt.setOutlineColor(sf::Color::Black);
+
+    mouseTxt.setOutlineThickness(1u);
+    cellTxt.setOutlineThickness(1u);
+    selectedTxt.setOutlineThickness(1u);
+    offsetTxt.setOutlineThickness(1u);
+
+    mouseTxt.setPosition({20.f,20.f});
+    cellTxt.setPosition({20.f ,50.f });
+    selectedTxt.setPosition({ 20.f, 80.f });
+    offsetTxt.setPosition({ 20.f, 110.f});
+
+    std::string mouseStr{    "Mouse     : " };
+    std::string cellStr{     "Cell      : " };
+    std::string selectedStr{ "Selected  : " };
+    std::string offsetStr{ "Offset  : " };
+
+    mouseStr.append(std::to_string((int)mouseStr_.x));
+    mouseStr.append(", ");
+    mouseStr.append(std::to_string((int)mouseStr_.y));
+   
+
+    cellStr.append(std::to_string(cellStr_.x));
+    cellStr.append(", ");
+    cellStr.append(std::to_string(cellStr_.y));
+    
+    sf::Vector2i selStr{};
+    selStr.x = (std::min(std::max((int)selectedStr_.x, 0), hlp::worldSize.first - 1));
+    selStr.y = (std::min(std::max((int)selectedStr_.y, 0), hlp::worldSize.second - 1));
+    if ((int)selectedStr_.x < 0)
+        selStr.y = 0;
+    if ((int)selectedStr_.y < 0)
+        selStr.x = 0;
+    selectedStr.append(std::to_string(selStr.x));
+    selectedStr.append(", ");
+    selectedStr.append(std::to_string(selStr.y));
+
+    offsetStr.append(std::to_string((int)offsetStr_.x));
+    offsetStr.append(", ");
+    offsetStr.append(std::to_string((int)offsetStr_.y));
+ 
+    mouseTxt.setString(mouseStr);
+    cellTxt.setString(cellStr);
+    selectedTxt.setString(selectedStr);
+    offsetTxt.setString(offsetStr);
+
+    wnd_.draw(mouseTxt);
+    wnd_.draw(cellTxt);
+    wnd_.draw(selectedTxt);
+    wnd_.draw(offsetTxt);
+
+
+
 }
 
 sf::Texture& Client::getPlayerTex(AnimID id_) { return playerTexArr[(int)id_]; }

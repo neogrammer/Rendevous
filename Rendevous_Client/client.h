@@ -41,9 +41,9 @@ class Client : public cnet::client_interface<Msg>
 
 
 public:
-    sf::Vector2i mpos{0,0};
-    const unsigned SCRW = 1024;
-    const unsigned SCRH = 576;
+    sf::Vector2f mpos{0,0};
+    const unsigned SCRW = 1980;
+    const unsigned SCRH = 1024;
     typedef std::array<std::vector<sf::IntRect>, 8> AnimSheet;
     using AnimSheet = std::array<std::vector<sf::IntRect>, 8>;
     Client();
@@ -56,7 +56,7 @@ private:
     void handleWindowEvents(sf::RenderWindow& wnd_);
     void processInput();
     bool loadMap(uint32_t** data, int numElems, const std::string& filename);
-
+    void displayText(sf::RenderWindow& wnd_, const sf::Vector2f& mouseStr_, const sf::Vector2i& cellStr_, const sf::Vector2f& selectedStr_, const sf::Vector2i offsetStr_);
     void initAssets();
     bool Update(float fElapsedTime);
     void Render();
@@ -86,6 +86,8 @@ private:
     sPlayerDescription descPlayer;
     uint32_t nPlayerID = 0;
     PlayerIO myIO{};
+
+    sf::Sprite selected{ tilesetTex };
 
     std::unordered_map<uint32_t, sPlayerDescription> mapObjects; // who exists
     std::unordered_map<uint32_t, PlayerDrawData>     drawObjects; // last snapshot data

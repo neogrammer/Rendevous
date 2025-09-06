@@ -9,9 +9,9 @@ class hlp
 {
 public:
 	static std::pair<float, float> worldOrigin;
-	static std::pair<float, float> worldSize;
-	static std::pair<float, float> tileSize;
-
+	static std::pair<int, int> worldSize;
+	static std::pair<int, int> tileSize;
+	
 	/// <summary>
 	/// What you need: tileW_ and tileH_ are the ground portion of the texture image in the usual case of full cubes as the texture image if the isometric tile, as only the top half is needed for calculations.  Theses are in pixels (the width and height) of the rectangular area surrounding that top half or ground portion of the square isometrix tile, usual case, if ur using tiles with the width fudged to exactly twice the height, that is the ratio,(or model, you may look at it as) that this calculation assumes it is working with.
 	/// x_ and y_ are.. you guessed it!  The position of the coordinate you wish to convert to screenspace, where the isometric illusion magic fucks with their eyes.
@@ -51,6 +51,109 @@ public:
 		//    , but we are cheating.. cuz we stupid cheater cheat cheats.. shhh.. don't tell me.. I'll get mad at me and ground myself again...
 		return std::pair{ (uint32_t)cartX, (uint32_t)cartY };
 	};
+
+	// ---- screen -> cell + offset (inside that cell’s TWxTH AABB) ----
+	static inline void ScreenToCellAndOffset(sf::Vector2f screen,
+		int& cx, int& cy,
+		int& offX, int& offY)
+	{
+		const float TW = (float)tileSize.first;
+		const float TH = (float)tileSize.second;
+
+		// 1) Remove world origin (in pixels)
+		const float sx = screen.x - worldOrigin.first * TW;
+		const float sy = screen.y - worldOrigin.second * TH;
+
+		// 2) Invert the iso transform to get *fractional* cell coords
+		const float a = (2.0f * sx) / TW;
+		const float b = (2.0f * sy) / TH;
+		const float cx_f = 0.5f * (a + b);
+		const float cy_f = 0.5f * (b - a);
+
+		cx = (int)std::floor(cx_f);
+		cy = (int)std::floor(cy_f);
+
+		// 3) Rebuild this cell’s top vertex in screen space (relative to origin already removed)
+		auto topX = (cx - cy) * (TW * 0.5f);
+		auto topY = (cx + cy) * (TH * 0.5f);
+
+		// 4) Local position relative to that top vertex
+		float lx = sx - topX;
+		float ly = sy - topY;
+
+		// 5) Convert to AABB-local inside a TWxTH box whose top-left is (topX - TW/2, topY)
+		float xIn = lx + (TW * 0.5f);  // expect [0..TW]
+		float yIn = ly;                // expect [0..TH]
+
+		// 6) If we’re outside the diamond (but inside the bbox), use your line tests to nudge
+		//    Use AABB-local (xIn,yIn) directly with the edge functions.
+		auto F1 = TH * xIn - TW * yIn - 0.5f * TH * TW;          // (TW/2,0) -> (TW,TH/2)
+		auto F2 = TH * xIn + TW * yIn - 1.5f * TH * TW;          // (TW/2,TH)-> (TW,TH/2)
+		auto F3 = TW * yIn - TH * xIn - 0.5f * TH * TW;          // (0,TH/2) -> (TW/2,TH)
+		auto F4 = -TH * xIn - TW * yIn + 0.5f * TH * TW;         // (0,TH/2) -> (TW/2,0)
+
+		// Inside iff F1<=0 && F2<=0 && F3<=0 && F4<=0.
+		if (!(F1 <= 0 && F2 <= 0 && F3 <= 0 && F4 <= 0)) {
+			// Decide which neighbor to step into (typical iso diamond stencil):
+			if (F1 > 0) {          // outside toward top-right
+				cx += 1;           // east neighbor
+			}
+			else if (F2 > 0) {   // outside toward bottom-right
+				cx += 1; cy += 1;  // south-east neighbor
+			}
+			else if (F3 > 0) {   // outside toward bottom-left
+				cy += 1;           // south neighbor
+			}
+			else if (F4 > 0) {   // outside toward top-left
+				cx -= 1;           // west (top-left) neighbor
+			}
+
+			// Recompute top vertex & local coords for the new (cx,cy)
+			topX = (cx - cy) * (TW * 0.5f);
+			topY = (cx + cy) * (TH * 0.5f);
+			lx = sx - topX;
+			ly = sy - topY;
+			xIn = lx + (TW * 0.5f);
+			yIn = ly;
+		}
+
+		// 7) Final integer offsets inside the cell (clamp for safety)
+		int ix = (int)std::floor(xIn + 0.5f);
+		int iy = (int)std::floor(yIn + 0.5f);
+		if (ix < 0) ix = 0; else if (ix > (int)TW - 1) ix = (int)TW - 1;
+		if (iy < 0) iy = 0; else if (iy > (int)TH - 1) iy = (int)TH - 1;
+
+		offX = ix;
+		offY = iy;
+	};
+
+	// Overload
+	static inline void ScreenToCellAndOffset(float sx, float sy,
+		int& cx, int& cy,
+		int& offX, int& offY)
+	{
+		ScreenToCellAndOffset(sf::Vector2f{ sx, sy }, cx, cy, offX, offY);
+	};
+
+	// ---- screen -> world px (cartesian) via cell & offset ----
+	static inline sf::Vector2f ScreenToWorld(sf::Vector2f screen)
+	{
+		int cx, cy, offX, offY;
+		ScreenToCellAndOffset(screen, cx, cy, offX, offY);
+		const float TW = (float)tileSize.first;
+		const float TH = (float)tileSize.second;
+
+		// World/cartesian pixels are exactly cell*tile + offset (your original convention)
+		float wx = cx * TW + (float)offX;
+		float wy = cy * TH + (float)offY;
+		return { wx, wy };
+	};
+
+	static inline sf::Vector2f ScreenToWorld(float sx, float sy)
+	{
+		return ScreenToWorld(sf::Vector2f{ sx, sy });
+	};
+
 
 
 	/// <summary>
@@ -168,7 +271,14 @@ public:
 
 	};
 
-
+	// Helpers: AABB-local test for an iso tile of size TW x TH
+	static inline bool pointInIsoDiamond(float xIn, float yIn, float TW, float TH) {
+		const float F1 = TH * xIn - TW * yIn - 0.5f * TH * TW;       // (TW/2,0) -> (TW,TH/2)
+		const float F2 = TH * xIn + TW * yIn - 1.5f * TH * TW;       // (TW/2,TH)-> (TW,TH/2)
+		const float F3 = TW * yIn - TH * xIn - 0.5f * TH * TW;       // (0,TH/2) -> (TW/2,TH)
+		const float F4 = -TH * xIn - TW * yIn + 0.5f * TH * TW;       // (0,TH/2) -> (TW/2,0)
+		return (F1 <= 0 && F2 <= 0 && F3 <= 0 && F4 <= 0);
+	};
 
 };
 #endif

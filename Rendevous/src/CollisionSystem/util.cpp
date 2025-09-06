@@ -1,4 +1,5 @@
 #include "util.h"
+#include "../../../SolutionHelpers.h"
 
 sf::Vector2f util::toIso(sf::Vector2f cart)
 {
@@ -11,10 +12,13 @@ sf::Vector2f util::toIso(sf::Vector2f cart)
     return { xIso,yIso };
 }
 
-sf::Vector2f util::toCart(float screenX, float screenY, float tileSize) {
-    float mapx = (screenX / tileSize + screenY / (tileSize * 0.5f)) * 0.5f;
-    float mapy = (screenY / (tileSize * 0.5f) - (screenX / tileSize)) * 0.5f;
-    return sf::Vector2f{ mapx, mapy };
+
+sf::Vector2f util::toCart(sf::Vector2f iso) {
+    const float TW = (float)hlp::tileSize.first; // or tileSize.first
+    const float TH = (float)hlp::tileSize.second;  // or tileSize.second
+    const float x = iso.x, y = iso.y;
+
+    const float cartX = x + (TW / TH) * y;
+    const float cartY = y - (TH / TW) * x;
+    return { cartX, cartY };
 }
-
-

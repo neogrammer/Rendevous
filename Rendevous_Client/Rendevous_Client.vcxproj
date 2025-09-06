@@ -139,6 +139,7 @@
   <ItemGroup>
     <Image Include="assets\textures\attack_sheet.png" />
     <Image Include="assets\textures\blocksTileSheet.png" />
+    <Image Include="assets\textures\blocksTileSheet128x128.png" />
     <Image Include="assets\textures\Eskibro.jpg" />
     <Image Include="assets\textures\idle_sheet.png" />
     <Image Include="assets\textures\isometric_demo.png" />

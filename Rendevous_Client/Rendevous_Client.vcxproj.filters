@@ -65,6 +65,9 @@
     <Image Include="assets\textures\attack_sheet.png">
       <Filter>assets\textures</Filter>
     </Image>
+    <Image Include="assets\textures\blocksTileSheet128x128.png">
+      <Filter>assets\textures</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Font Include="assets\font\Crusty.ttf">
