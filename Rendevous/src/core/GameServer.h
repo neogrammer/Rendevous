@@ -25,12 +25,10 @@
 
 class GameServer : public cnet::server_interface<Msg>
 {
-
-    float dtHang{ 0 };
-    bool repaint{ false };
     uint32_t collidedWithTile{ 0 };
     int32_t collisionTilePosX{ 0 };
     int32_t collisionTilePosY{ 0 };
+    sf::RenderWindow* window;
 
 public:
     sf::Vector2f getPlayerColliderPos(sf::Sprite& player_);
@@ -91,6 +89,7 @@ protected:
 public:
     void Simulate(float dt);
     void BroadcastSnapshot();
+    void SetWindow(sf::RenderWindow& wnd_);
 };
 
 #endif

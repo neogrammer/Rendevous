@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
     const float dt = 1.0f / 60.0f;
     float accumulator = 0.f;
     sf::Clock clock;
-
+    server.SetWindow(window);
     while (window.isOpen())
     {
         server.Update(10);

@@ -225,93 +225,70 @@ GameServer::GameServer(uint16_t nPort) : cnet::server_interface<Msg>(nPort) {
     {
        
 
-        for (auto& kv : playerDataMap)
+        for (auto& player : playerDataMap)
         {
-            handleInput(playerIOMap[kv.first], playerDataMap[kv.first]);
-            
-            //if (playerCollideTiles.find(kv.first) != playerCollideTiles.end() && playerDataMap.find(kv.first) != playerDataMap.end())
-            //{
-            //    auto& collideTiles = playerCollideTiles[kv.first];
+            handleInput(playerIOMap[player.first], playerDataMap[player.first]);
 
-            //    // player has collideTiles
-            //    float startTileX = (float)(collideTiles.startTileXIdx);
-            //    float startTileY = (float)(collideTiles.startTileYIdx);
-
-            //    auto startTilePos = sf::Vector2f{ startTileX * (float)collideTiles.tileSize,startTileY * (float)collideTiles.tileSize };
-            //    auto startTileCartPos = hlp::ToCart((uint32_t)startTilePos.x, (uint32_t)startTilePos.y);
-            //    auto startTileCart = sf::Vector2i{ (int)startTileCartPos.first / (int)collideTiles.tileSize, (int)startTileCartPos.second / (int)collideTiles.tileSize };
-
-
-
-            //    float endTileX = (float)(collideTiles.endTileXIdx);
-            //    float endTileY = (float)(collideTiles.endTileYIdx);
-
-            //    auto endTilePos = sf::Vector2f{ endTileX * (float)collideTiles.tileSize,endTileY * (float)collideTiles.tileSize };
-            //    auto endTileCartPos = hlp::ToCart((uint32_t)startTilePos.x, (uint32_t)startTilePos.y);
-            //    auto endTileCart = sf::Vector2i{ (int)endTileCartPos.first / (int)collideTiles.tileSize, (int)endTileCartPos.second / (int)collideTiles.tileSize };
+            bool collided = false;
+            for (int i = 0; i < hlp::worldSize.first * hlp::worldSize.second; i++)
+            {
+                if (currTSetDetails[mapData[i]] != 1)
+                {
+                    continue;
+                }
+                auto temp = hlp::ScreenToWorld(tilemap[i].getPosition());
+                if (tilemap[i].getPosition().x >= window->getView().getCenter().x - window->getSize().x / 2 && tilemap[i].getPosition().x < window->getView().getCenter().x + window->getSize().x / 2
+                    && tilemap[i].getPosition().y >= window->getView().getCenter().y - window->getSize().y / 2 && tilemap[i].getPosition().y < window->getView().getCenter().y + window->getSize().y / 2)
+                {
 
 
-            //    int tileCountX = endTileCart.x - startTileCart.x;
-            //    int tileCountY = endTileCart.y - startTileCart.y;
+                    std::unique_ptr<Collider> tileCollider = std::make_unique<IsoTileCollider>(tilemap[i]);
 
-            //    bool collided = false;
-
-            //    myStrings.clear();
-            //    myStrings.reserve(tileCountX * tileCountY);
-            //    myStrings.emplace_back("\nNumber of Tiles being considered: ");
-            //    myStrings.back().append(std::to_string(tileCountX * tileCountY));
-            //    myStrings.back().append("\n");
-
-            //    for (uint32_t tileY = (uint32_t)startTileCart.y; tileY <= (uint32_t)endTileCart.y; tileY++)
-            //    {
-            //        for (uint32_t tileX = (uint32_t)startTileCart.x; tileX <= (uint32_t)endTileCart.x; tileX++)
-            //        {
-            //            uint32_t num = (uint32_t)tileY * collideTiles.pitch + (uint32_t)tileX;
-            //            if (num >= collideTiles.mapTileCount) { break; }
-            //            if (currTSetDetails[mapData[num]] != 1)
-            //            {
-            //                myStrings.emplace_back("\nTile not considered at location in isospace x: ");
-            //                myStrings.back().append(std::to_string(hlp::ToScreen( (float)tileX * collideTiles.tileSize,(float)tileY * collideTiles.tileSize).first));
-            //                myStrings.back().append(", ");
-            //                myStrings.back().append(std::to_string(hlp::ToScreen((float)tileX * collideTiles.tileSize,(float)tileY * collideTiles.tileSize ).second));
-
-            //                continue;
-            //            }
-            //            else
-            //            {
-            //                myStrings.emplace_back("\nTile considered at location in isospace x: ");
-            //                myStrings.back().append(std::to_string(hlp::ToScreen( (float)tileX * collideTiles.tileSize,(float)tileY * collideTiles.tileSize ).first));
-            //                myStrings.back().append(", ");
-            //                myStrings.back().append(std::to_string(hlp::ToScreen( (float)tileX * collideTiles.tileSize,(float)tileY * collideTiles.tileSize ).second));
+                    sf::Sprite feetSpr{ dummyTex };
 
 
-            //                // we have a blocking tile, map back to iso, create a sprite positioned at top left of iso pos, and then make a collider using that sprite
-            //                //  then make a sprite and collider for the player
-            //                //  then collide and resolve using my awesome diag function
-            //                auto isoPos = hlp::ToScreen( (float)tileX * (float)collideTiles.tileSize, (float)tileY * (float)collideTiles.tileSize );
-            //                sf::Sprite tile{ dummyTex };
-            //                tile.setPosition({ (float)isoPos.first, (float)isoPos.second });
-            //                std::unique_ptr<Collider> tileCollider = std::make_unique<IsoTileCollider>(tile);
-            //                sf::Sprite pSpr{ dummyTex };
-            //                pSpr.setPosition({ (float)hlp::ToScreen((playerDataMap[kv.first].xpos + 124.f) + (playerDataMap[kv.first].xvel * dt),(playerDataMap[kv.first].ypos + 180.f) + (playerDataMap[kv.first].yvel * dt)).first, (float)hlp::ToScreen((playerDataMap[kv.first].xpos + 124.f) + (playerDataMap[kv.first].xvel * dt), (playerDataMap[kv.first].ypos + 180.f) + (playerDataMap[kv.first].yvel * dt)).second });
-            //                std::unique_ptr<Collider> playerCollider = std::make_unique<BoxCollider>(pSpr, 50.f, 30.f);
+                    feetSpr.setPosition({ (float)playerDataMap[player.first].xpos + 124.f + player.second.xvel * dt, (float)playerDataMap[player.first].ypos + 150.f + player.second.yvel * dt });
+                    std::unique_ptr<Collider> playerCollider = std::make_unique<BoxCollider>(feetSpr, 50.f, 30.f);
+                    static sf::Vector2f prevPos{};
+                    if (Physics::DetectAndResolve(*playerCollider, *tileCollider))
+                    {
 
-            //                if (Physics::DetectAndResolve(*playerCollider, *tileCollider))
-            //                {
-            //                    collided = true;
-            //                    auto nextPos = hlp::ToCart((uint32_t)pSpr.getPosition().x, (uint32_t)pSpr.getPosition().y);
-            //                    playerDataMap[kv.first].xpos = nextPos.first - 124.f;
-            //                    playerDataMap[kv.first].ypos = nextPos.second - 180.f;
-            //                }
-            //            }
-            //        }
-            //    }
+                        collided = true;
+                        player.second.xpos = playerCollider->getSprite().getPosition().x - 124.f;
+                        player.second.ypos = playerCollider->getSprite().getPosition().y - 150.f;
+                        auto p = tileCollider->getSprite().getPosition().x;
+                        auto pp = tileCollider->getSprite().getPosition().y;
 
-         
-                // player has collided with map tiles. right now, the water tiles, safe to send the snapshot over to the client
-               
+                        cnet::message<Msg> msg;
+                        msg.header.id = Msg::Server_TileCollided;
 
-           // }
+                        TileCollide tc{};
+                        tc.id = player.first;
+                        tc.isColliding = 1;
+                        tc.xpos = (int32_t)p;
+                        tc.ypos = (int32_t)pp;
+
+                        msg << tc;
+
+                        MessageAllClients(msg);
+
+                    }
+
+                }
+
+            }
+            //    // if no collision took place then the velocity was not applied to the position yet, and we can just do that directly now, in this case
+            if (!collided)
+            {
+                player.second.xpos += player.second.xvel * dt;
+                player.second.ypos += player.second.yvel * dt;
+            }
+
+
+
+
+            animate(playerIOMap[player.first], playerDataMap[player.first], dt);
+
         }
     }
     void GameServer::BroadcastSnapshot()
@@ -363,6 +340,11 @@ GameServer::GameServer(uint16_t nPort) : cnet::server_interface<Msg>(nPort) {
 
     }
 
+    void GameServer::SetWindow(sf::RenderWindow& wnd_)
+    {
+        window = &wnd_;
+    }
+
 
 
     sf::Vector2f GameServer::getPlayerColliderPos(sf::Sprite& player_)
@@ -386,85 +368,16 @@ GameServer::GameServer(uint16_t nPort) : cnet::server_interface<Msg>(nPort) {
         static float fps60 = 1.f / 60.f;
         float dt_ = clock.restart().asSeconds();
         accumulator += dt_;
-        repaint = false;
         while (accumulator >= fps60)
         {
             this->Simulate(fps60);
             accumulator -= fps60;
-            repaint = true;
-            dtHang = fps60;
         }
         return true;
     }
     void GameServer::renderServerDisplay(sf::RenderWindow& window)
     {
-        if (repaint)
-        {
-            for (auto& player : playerDataMap)
-            {
-
-                bool collided = false;
-                for (int i = 0; i < hlp::worldSize.first * hlp::worldSize.second; i++)
-                {
-                    if (currTSetDetails[mapData[i]] != 1)
-                    {
-                        continue;
-                    }
-                    auto temp = hlp::ScreenToWorld(tilemap[i].getPosition());
-                    if (tilemap[i].getPosition().x >= window.getView().getCenter().x - window.getSize().x / 2 && tilemap[i].getPosition().x < window.getView().getCenter().x + window.getSize().x / 2
-                        && tilemap[i].getPosition().y >= window.getView().getCenter().y - window.getSize().y / 2 && tilemap[i].getPosition().y < window.getView().getCenter().y + window.getSize().y / 2)
-                    {
-
-
-                        std::unique_ptr<Collider> tileCollider = std::make_unique<IsoTileCollider>(tilemap[i]);
-
-                        sf::Sprite feetSpr{ dummyTex };
-
-
-                        feetSpr.setPosition({ (float)playerDataMap[player.first].xpos + 124.f, (float)playerDataMap[player.first].ypos + 150.f });
-                        std::unique_ptr<Collider> playerCollider = std::make_unique<BoxCollider>(feetSpr, 50.f, 30.f);
-                        static sf::Vector2f prevPos{};
-                        if (Physics::DetectAndResolve(*playerCollider, *tileCollider))
-                        {
-
-                            collided = true;
-                            player.second.xpos = playerCollider->getSprite().getPosition().x - 124.f;
-                            player.second.ypos = playerCollider->getSprite().getPosition().y - 150.f;
-                           auto p = tileCollider->getSprite().getPosition().x;
-                           auto pp =  tileCollider->getSprite().getPosition().y;
-
-                            cnet::message<Msg> msg;
-                            msg.header.id = Msg::Server_TileCollided;
-
-                            TileCollide tc{};
-                            tc.id = player.first;
-                            tc.isColliding = 1;
-                            tc.xpos = (int32_t)p;
-                            tc.ypos = (int32_t)pp;
-
-                            msg << tc;
-
-                            MessageAllClients(msg);
-
-                        }
-
-                    }
-
-                }
-                //    // if no collision took place then the velocity was not applied to the position yet, and we can just do that directly now, in this case
-                if (!collided)
-                {
-                    player.second.xpos += player.second.xvel * dtHang;
-                    player.second.ypos += player.second.yvel * dtHang;
-                }
-
-
-
-
-                animate(playerIOMap[player.first], playerDataMap[player.first], dtHang);
-
-            }
-        }
+       
         // Debug draw
         window.clear();
         static sf::Font crustyFont{ "assets/font/font2.ttf" };
@@ -733,7 +646,7 @@ GameServer::GameServer(uint16_t nPort) : cnet::server_interface<Msg>(nPort) {
                 if (num >= 1800) break;
                 auto& t = tilemap.emplace_back(dummyTex);
                 t.setPosition(hlp::ToScreenIso({ (float)x * (float)hlp::tileSize.first, (float)y * (float)hlp::tileSize.second }));
-                t.setTextureRect({ { 0,0 }, {1,1} });
+                t.setTextureRect({ { 0,0 }, {hlp::tileSize.first ,hlp::tileSize.second} });
             }
         }
 
