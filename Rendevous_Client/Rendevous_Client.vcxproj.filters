@@ -31,6 +31,9 @@
     <Filter Include="assets\tilesets">
       <UniqueIdentifier>{ebe39531-9f33-4b18-9b78-0fab02ef65de}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\core">
+      <UniqueIdentifier>{633506f6-a99a-4df8-9160-fa37d70813d5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="client.cpp">
@@ -38,6 +41,9 @@
     </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="core\Renderer.cpp">
+      <Filter>Source Files\core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -108,6 +114,9 @@
   <ItemGroup>
     <ClInclude Include="client.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\Renderer.h">
+      <Filter>Source Files\core</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

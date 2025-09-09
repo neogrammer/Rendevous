@@ -20,6 +20,9 @@
     <ClCompile Include="src\core\GameServer.cpp">
       <Filter>core</Filter>
     </ClCompile>
+    <ClCompile Include="src\core\GameLogic.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="assets">
@@ -74,6 +77,9 @@
       <Filter>CollisionSystem</Filter>
     </ClInclude>
     <ClInclude Include="src\core\GameServer.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\GameLogic.h">
       <Filter>core</Filter>
     </ClInclude>
   </ItemGroup>
