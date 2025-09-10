@@ -518,38 +518,38 @@ GameServer::GameServer(uint16_t nPort) : cnet::server_interface<Msg>(nPort) {
         static const float frameAnimDelay = 0.1f;
         static const float attackAnimDelay = 0.02f;
         static const float runAnimDelay = 0.03f;
-        static int currAnim{ 0 };
-        currAnim = (int)(uint32_t)pData.animID;
-        static float elapsed{ 0 };
-        elapsed += dt;
-        static float currFrameDelay{};
+
+        int currAnim = (int)(uint32_t)pData.animID;
+   
+        pData.elapsed += dt;
+        
         switch (currAnim)
         {
         case 0: // Idle
         {
-            if (currFrameDelay != frameAnimDelay) { elapsed = 0; }
-            currFrameDelay = frameAnimDelay;
+            if (pData.frameDelay != frameAnimDelay) { pData.elapsed = 0; }
+            pData.frameDelay = frameAnimDelay;
         }
         break;
         case 1: // Run
         {
-            if (currFrameDelay != runAnimDelay) { elapsed = 0; }
-            currFrameDelay = runAnimDelay;
+            if (pData.frameDelay != runAnimDelay) { pData.elapsed = 0; }
+            pData.frameDelay = runAnimDelay;
         }
         break;
         case 2: // Attack
         {
-            if (currFrameDelay != attackAnimDelay) { elapsed = 0; }
-            currFrameDelay = attackAnimDelay;
+            if (pData.frameDelay != attackAnimDelay) { pData.elapsed = 0; }
+            pData.frameDelay = attackAnimDelay;
         }
         break;
         default: // Idle
         {
-            currFrameDelay = 100000.f;
+            pData.frameDelay = 100000.f;
         }
         break;
         }
-        while (elapsed >= currFrameDelay)
+        while (pData.elapsed >= pData.frameDelay)
         {
 
             ++pData.frameIndex;
@@ -621,7 +621,7 @@ GameServer::GameServer(uint16_t nPort) : cnet::server_interface<Msg>(nPort) {
                 }
             }
 
-            elapsed -= currFrameDelay;
+            pData.elapsed -= pData.frameDelay;
         }
     }
 

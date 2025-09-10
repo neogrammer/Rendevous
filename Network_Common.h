@@ -232,6 +232,9 @@ struct PlayerData            // Server-side simulation state
     AnimID animID = AnimID::Idle;
     Dir    dir = Dir::D;
     uint32_t frameIndex = 0;
+    float elapsed = 0.f;
+    int currIndex = 0;
+    float frameDelay = 0.10f;  // current delay (idle default)
 };
 
 struct PlayerDrawData        // Sent to clients (minimal for rendering)
