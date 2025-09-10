@@ -77,7 +77,7 @@ bool Client::OnUserCreate()
     }
 
     // Connect
-    while (!Connect("127.0.0.1", 60000)) {}
+    while (!Connect("192.168.0.15", 60000)) {}
     //24.236.104.52
     //
     //phone: 10.143.2.210
@@ -501,16 +501,16 @@ void Client::Render()
     
   
 
-    std::vector<std::pair<uint32_t, std::pair<uint32_t, PlayerDrawData>>> sortme;
+    std::vector<std::pair<float, std::pair<uint32_t, PlayerDrawData>>> sortme;
     sortme.clear();
     sortme.reserve(drawObjects.size());
 
     for (auto& kv : drawObjects)
     {
-        sortme.emplace_back(std::pair{ (int)getPlayerZHeight(kv.first), std::pair{kv.first, drawObjects[kv.first]} });
+        sortme.emplace_back(std::pair{ getPlayerZHeight(kv.first), std::pair{kv.first, kv.second} });
     }
 
-    sort(sortme.begin(), sortme.end(), [&](const std::pair<uint32_t, std::pair<uint32_t, PlayerDrawData>>& a, const std::pair<uint32_t, std::pair<uint32_t, PlayerDrawData>>& b)->bool {
+    sort(sortme.begin(), sortme.end(), [&](const std::pair<float, std::pair<uint32_t, PlayerDrawData>>& a, const std::pair<float, std::pair<uint32_t, PlayerDrawData>>& b)->bool {
         return (a.first < b.first);
         });
 
@@ -522,7 +522,7 @@ void Client::Render()
     {
         if (sortme[i].second.second.id == 0Ui32) { continue; }
         uint32_t id = sortme[i].second.first;
-        uint32_t zHeight = sortme[i].first;
+        float zHeight = sortme[i].first;
         const auto& d = drawObjects[sortme[i].second.first];
 
         // Clamp bad values coming off the wire
@@ -679,9 +679,10 @@ sf::Texture& Client::getPlayerTex(AnimID id_) { return playerTexArr[(int)id_]; }
 float Client::getPlayerZHeight(uint32_t playerID)
 {
     sf::Vector2f ppos = { drawObjects[playerID].xpos,drawObjects[playerID].ypos };
-    sf::Vector2f ipos = { (ppos.x - ppos.y) * ((float)hlp::tileSize.first / 2.f) ,  (ppos.x + ppos.y) * ((float)hlp::tileSize.first / 4.f) };
+    float ypos = ppos.y;
+    //sf::Vector2f ipos = { (ppos.x - ppos.y) * ((float)hlp::tileSize.first / 2.f) ,  (ppos.x + ppos.y) * ((float)hlp::tileSize.first / 4.f) };
 
-    return ipos.y + playerZHeightOffset;
+    return ypos + playerZHeightOffset;
 }
 uint32_t Client::animIndex(AnimID a) {
     const auto v = static_cast<uint32_t>(a);
