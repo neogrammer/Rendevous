@@ -1,3 +1,7 @@
-C:\Users\jlhar\OneDrive\Desktop\SFML\Rendevous\Rendevous\Rendevous_Client\client.cpp;C:\Users\jlhar\OneDrive\Desktop\SFML\Rendevous\Rendevous\Rendevous_Client\x64\Debug\client.obj
+C:\Users\jlhar\OneDrive\Desktop\SFML\Rendevous\Rendevous\Rendevous_Client\core\client.cpp;C:\Users\jlhar\OneDrive\Desktop\SFML\Rendevous\Rendevous\Rendevous_Client\x64\Debug\client.obj
 C:\Users\jlhar\OneDrive\Desktop\SFML\Rendevous\Rendevous\Rendevous_Client\core\Renderer.cpp;C:\Users\jlhar\OneDrive\Desktop\SFML\Rendevous\Rendevous\Rendevous_Client\x64\Debug\Renderer.obj
 C:\Users\jlhar\OneDrive\Desktop\SFML\Rendevous\Rendevous\Rendevous_Client\main.cpp;C:\Users\jlhar\OneDrive\Desktop\SFML\Rendevous\Rendevous\Rendevous_Client\x64\Debug\main.obj
+C:\Users\jlhar\OneDrive\Desktop\SFML\Rendevous\Rendevous\Rendevous_Client\world\Map.cpp;C:\Users\jlhar\OneDrive\Desktop\SFML\Rendevous\Rendevous\Rendevous_Client\x64\Debug\Map.obj
+C:\Users\jlhar\OneDrive\Desktop\SFML\Rendevous\Rendevous\Rendevous_Client\world\MapMgr.cpp;C:\Users\jlhar\OneDrive\Desktop\SFML\Rendevous\Rendevous\Rendevous_Client\x64\Debug\MapMgr.obj
+C:\Users\jlhar\OneDrive\Desktop\SFML\Rendevous\Rendevous\Rendevous_Client\world\Tile.cpp;C:\Users\jlhar\OneDrive\Desktop\SFML\Rendevous\Rendevous\Rendevous_Client\x64\Debug\Tile.obj
+C:\Users\jlhar\OneDrive\Desktop\SFML\Rendevous\Rendevous\Rendevous_Client\world\Tileset.cpp;C:\Users\jlhar\OneDrive\Desktop\SFML\Rendevous\Rendevous\Rendevous_Client\x64\Debug\Tileset.obj

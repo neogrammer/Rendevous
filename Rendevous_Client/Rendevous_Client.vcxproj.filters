@@ -34,15 +34,39 @@
     <Filter Include="Source Files\core">
       <UniqueIdentifier>{633506f6-a99a-4df8-9160-fa37d70813d5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\world">
+      <UniqueIdentifier>{14ea449e-cb03-4c04-a81b-61e3f95214e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\drawobjects">
+      <UniqueIdentifier>{cd1df2c9-207c-4db4-ac32-3dc397bff366}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="client.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="core\Renderer.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="core\client.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="world\Map.cpp">
+      <Filter>Source Files\world</Filter>
+    </ClCompile>
+    <ClCompile Include="world\MapMgr.cpp">
+      <Filter>Source Files\world</Filter>
+    </ClCompile>
+    <ClCompile Include="world\Tile.cpp">
+      <Filter>Source Files\world</Filter>
+    </ClCompile>
+    <ClCompile Include="world\Tileset.cpp">
+      <Filter>Source Files\world</Filter>
+    </ClCompile>
+    <ClCompile Include="draw_objects\PlayerDraw.cpp">
+      <Filter>Source Files\drawobjects</Filter>
+    </ClCompile>
+    <ClCompile Include="core\Game.cpp">
       <Filter>Source Files\core</Filter>
     </ClCompile>
   </ItemGroup>
@@ -112,10 +136,28 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="client.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="core\Renderer.h">
+      <Filter>Source Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\client.h">
+      <Filter>Source Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="world\Map.h">
+      <Filter>Source Files\world</Filter>
+    </ClInclude>
+    <ClInclude Include="world\MapMgr.h">
+      <Filter>Source Files\world</Filter>
+    </ClInclude>
+    <ClInclude Include="world\Tile.h">
+      <Filter>Source Files\world</Filter>
+    </ClInclude>
+    <ClInclude Include="world\Tileset.h">
+      <Filter>Source Files\world</Filter>
+    </ClInclude>
+    <ClInclude Include="draw_objects\PlayerDraw.h">
+      <Filter>Source Files\drawobjects</Filter>
+    </ClInclude>
+    <ClInclude Include="core\Game.h">
       <Filter>Source Files\core</Filter>
     </ClInclude>
   </ItemGroup>

@@ -133,9 +133,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="client.cpp" />
+    <ClCompile Include="core\client.cpp" />
+    <ClCompile Include="core\Game.cpp" />
     <ClCompile Include="core\Renderer.cpp" />
+    <ClCompile Include="draw_objects\PlayerDraw.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="world\Map.cpp" />
+    <ClCompile Include="world\MapMgr.cpp" />
+    <ClCompile Include="world\Tile.cpp" />
+    <ClCompile Include="world\Tileset.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="assets\textures\attack_sheet.png" />
@@ -165,8 +171,14 @@
     <None Include="assets\tilesets\StarterSet.tset" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="client.h" />
+    <ClInclude Include="core\client.h" />
+    <ClInclude Include="core\Game.h" />
     <ClInclude Include="core\Renderer.h" />
+    <ClInclude Include="draw_objects\PlayerDraw.h" />
+    <ClInclude Include="world\Map.h" />
+    <ClInclude Include="world\MapMgr.h" />
+    <ClInclude Include="world\Tile.h" />
+    <ClInclude Include="world\Tileset.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

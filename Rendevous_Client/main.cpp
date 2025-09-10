@@ -1,12 +1,17 @@
-#include "client.h"
+#include "core/client.h"
 
 
 int main()
 {
     Client c;
-    if (c.OnUserCreate()) c.run();
-
     HWND hWnd = GetConsoleWindow();
     CloseWindow(hWnd);
+
+    if (c.OnUserCreate())
+    {
+        c.run();
+    }
+
+
     return 0;
 }
